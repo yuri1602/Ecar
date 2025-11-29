@@ -1,10 +1,238 @@
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Plus, Pencil, Trash2, Car } from 'lucide-react';
+import { api } from '../../lib/api';
+import { Vehicle, CreateVehicleDto } from '../../types';
+import VehicleFormModal from '../../components/vehicles/VehicleFormModal';
+
 export default function VehiclesPage() {
+  const queryClient = useQueryClient();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  // Fetch vehicles
+  const { data: vehicles = [], isLoading } = useQuery<Vehicle[]>({
+    queryKey: ['vehicles'],
+    queryFn: async () => {
+      const { data } = await api.get('/vehicles');
+      return data;
+    },
+  });
+
+  // Create vehicle mutation
+  const createMutation = useMutation({
+    mutationFn: async (vehicleData: CreateVehicleDto) => {
+      const { data } = await api.post('/vehicles', vehicleData);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      setIsModalOpen(false);
+      alert('Автомобилът е създаден успешно!');
+    },
+    onError: (error: any) => {
+      alert(error.response?.data?.message || 'Грешка при създаване на автомобил');
+    },
+  });
+
+  // Update vehicle mutation
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<CreateVehicleDto> }) => {
+      const response = await api.put(`/vehicles/${id}`, data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      setIsModalOpen(false);
+      setEditingVehicle(null);
+      alert('Автомобилът е обновен успешно!');
+    },
+    onError: (error: any) => {
+      alert(error.response?.data?.message || 'Грешка при обновяване на автомобил');
+    },
+  });
+
+  // Delete vehicle mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/vehicles/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      setDeleteConfirm(null);
+      alert('Автомобилът е изтрит успешно!');
+    },
+    onError: (error: any) => {
+      alert(error.response?.data?.message || 'Грешка при изтриване на автомобил');
+      setDeleteConfirm(null);
+    },
+  });
+
+  const handleEdit = (vehicle: Vehicle) => {
+    setEditingVehicle(vehicle);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    if (deleteConfirm === id) {
+      deleteMutation.mutate(id);
+    } else {
+      setDeleteConfirm(id);
+      setTimeout(() => setDeleteConfirm(null), 3000);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingVehicle(null);
+  };
+
+  const handleSubmit = (data: CreateVehicleDto) => {
+    if (editingVehicle) {
+      updateMutation.mutate({ id: editingVehicle.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const styles = {
+      active: 'bg-green-100 text-green-800',
+      maintenance: 'bg-yellow-100 text-yellow-800',
+      retired: 'bg-gray-100 text-gray-800',
+    };
+    const labels = {
+      active: 'Активен',
+      maintenance: 'Поддръжка',
+      retired: 'Извън експлоатация',
+    };
+    return (
+      <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles[status as keyof typeof styles]}`}>
+        {labels[status as keyof typeof labels]}
+      </span>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <div className="px-4 py-6 sm:px-0">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-gray-600">Зареждане...</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="px-4 py-6 sm:px-0">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Автомобили</h1>
-      <div className="bg-white shadow rounded-lg p-6">
-        <p className="text-gray-600">Списък с автомобили - Coming soon...</p>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Автомобили</h1>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+        >
+          <Plus className="w-5 h-5" />
+          Добави автомобил
+        </button>
       </div>
+
+      <div className="bg-white shadow rounded-lg overflow-hidden">
+        {vehicles.length === 0 ? (
+          <div className="text-center py-12">
+            <Car className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600 mb-4">Няма добавени автомобили</p>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="text-blue-600 hover:text-blue-700 font-medium"
+            >
+              Добави първи автомобил
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Рег. номер
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Автомобил
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Година
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Батерия
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Статус
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Действия
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {vehicles.map((vehicle) => (
+                  <tr key={vehicle.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{vehicle.registrationNo}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {vehicle.make} {vehicle.model}
+                      </div>
+                      {vehicle.color && (
+                        <div className="text-sm text-gray-500">{vehicle.color}</div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {vehicle.year}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {vehicle.batteryCapacityKwh} kWh
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getStatusBadge(vehicle.status)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button
+                        onClick={() => handleEdit(vehicle)}
+                        className="text-blue-600 hover:text-blue-900 mr-4"
+                        title="Редактирай"
+                      >
+                        <Pencil className="w-4 h-4 inline" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(vehicle.id)}
+                        className={`${
+                          deleteConfirm === vehicle.id
+                            ? 'text-red-600 hover:text-red-900'
+                            : 'text-gray-400 hover:text-red-600'
+                        }`}
+                        title={deleteConfirm === vehicle.id ? 'Натисни отново за потвърждение' : 'Изтрий'}
+                      >
+                        <Trash2 className="w-4 h-4 inline" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {isModalOpen && (
+        <VehicleFormModal
+          vehicle={editingVehicle}
+          onClose={handleCloseModal}
+          onSubmit={handleSubmit}
+          isSubmitting={createMutation.isPending || updateMutation.isPending}
+        />
+      )}
     </div>
   );
 }
