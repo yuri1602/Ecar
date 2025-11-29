@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:14-alpine
+    container_name: ecar-db
+    environment:
+      POSTGRES_DB: ecar
+      POSTGRES_USER: ecar_user
+      POSTGRES_PASSWORD: ecar_password_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ecar_user -d ecar"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis (Cache & Queue)
+  redis:
+    image: redis:7-alpine
+    container_name: ecar-redis
+    command: redis-server --requirepass ecar_redis_dev
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin (Optional - for database management)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: ecar-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@ecar.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
+  # Redis Commander (Optional - for Redis management)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: ecar-redis-commander
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:ecar_redis_dev
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+    depends_on:
+      - redis
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
