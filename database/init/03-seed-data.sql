@@ -9,10 +9,10 @@
 -- ============================================================================
 
 INSERT INTO users (id, email, password_hash, full_name, phone, role, is_active) VALUES
-    ('00000000-0000-0000-0000-000000000001', 'admin@ecar.local', '$2b$10$YourHashedPasswordHere1', 'Системен Администратор', '+359888111222', 'admin', true),
-    ('00000000-0000-0000-0000-000000000002', 'manager@ecar.local', '$2b$10$YourHashedPasswordHere2', 'Иван Петров', '+359888222333', 'fleet_manager', true),
-    ('00000000-0000-0000-0000-000000000003', 'driver1@ecar.local', '$2b$10$YourHashedPasswordHere3', 'Георги Стоянов', '+359888333444', 'driver', true),
-    ('00000000-0000-0000-0000-000000000004', 'driver2@ecar.local', '$2b$10$YourHashedPasswordHere4', 'Мария Димитрова', '+359888444555', 'driver', true)
+    ('00000000-0000-0000-0000-000000000001', 'admin@ecar.local', '$2b$10$lWXgeP8dgXMePtK3noP6T.iKeb3acsLPUst.oft0toWMAj9A/wJXK', 'Системен Администратор', '+359888111222', 'admin', true),
+    ('00000000-0000-0000-0000-000000000002', 'manager@ecar.local', '$2b$10$cgg83uqTEJR4PthA2OIGY.vHUyCWuyktUl4F2drgcOHKxmAwaLUCu', 'Иван Петров', '+359888222333', 'fleet_manager', true),
+    ('00000000-0000-0000-0000-000000000003', 'driver1@ecar.local', '$2b$10$eFh1ydY7suMn5324507IMey5as4TuSeO3mBXSSWx5yiRlm.PHtEw2', 'Георги Стоянов', '+359888333444', 'driver', true),
+    ('00000000-0000-0000-0000-000000000004', 'driver2@ecar.local', '$2b$10$WhPaIZ1Mn3kzskc331zxTeJO.wRKTjnurrCfJLfBuKmbFqLIzKhUK', 'Мария Димитрова', '+359888444555', 'driver', true)
 ON CONFLICT (id) DO NOTHING;
 
 COMMENT ON TABLE users IS 'Default password for all users: Password123!';

@@ -1,10 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ChargeSessionsService } from './charge-sessions.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { UserRole } from '../users/entities/user.entity';
+import { CreateChargeSessionDto } from './dto/create-charge-session.dto';
 
 @ApiTags('charge-sessions')
 @ApiBearerAuth()
@@ -16,13 +18,35 @@ export class ChargeSessionsController {
   @Get()
   @Roles(UserRole.ADMIN, UserRole.FLEET_MANAGER)
   @ApiOperation({ summary: 'Get all charge sessions' })
+  @ApiResponse({ status: 200, description: 'Returns all charge sessions' })
   findAll() {
     return this.chargeSessionsService.findAll();
   }
 
+  @Get('pending/vehicle/:vehicleId')
+  @ApiOperation({ summary: 'Get pending charge sessions for vehicle' })
+  @ApiResponse({ status: 200, description: 'Returns pending sessions' })
+  findPendingByVehicle(@Param('vehicleId') vehicleId: string) {
+    return this.chargeSessionsService.findPendingByVehicleId(vehicleId);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get charge session by ID' })
+  @ApiResponse({ status: 200, description: 'Returns charge session details' })
+  @ApiResponse({ status: 404, description: 'Session not found' })
   findOne(@Param('id') id: string) {
     return this.chargeSessionsService.findOne(id);
+  }
+
+  @Post()
+  @Roles(UserRole.ADMIN, UserRole.FLEET_MANAGER)
+  @ApiOperation({ summary: 'Create new charge session' })
+  @ApiResponse({ status: 201, description: 'Charge session created successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid data' })
+  create(
+    @Body() createChargeSessionDto: CreateChargeSessionDto,
+    @CurrentUser() user: any,
+  ) {
+    return this.chargeSessionsService.create(createChargeSessionDto, user.id);
   }
 }

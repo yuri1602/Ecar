@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
+import { UserVehicle } from './user-vehicle.entity';
 
 export enum VehicleStatus {
   ACTIVE = 'active',
@@ -60,4 +61,11 @@ export class Vehicle {
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
+
+  // Relations
+  @OneToMany(() => UserVehicle, (userVehicle) => userVehicle.vehicle)
+  userVehicles: UserVehicle[];
+
+  // Virtual property for charge sessions (will be loaded when needed)
+  chargeSessions?: any[];
 }
