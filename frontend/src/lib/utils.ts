@@ -23,6 +23,10 @@ export function formatDateTime(date: string | Date): string {
   });
 }
 
-export function formatNumber(num: number, decimals: number = 2): string {
-  return num.toFixed(decimals);
+export function formatNumber(num: number | string | null | undefined, decimals: number = 2): string {
+  const numValue = Number(num);
+  if (isNaN(numValue)) {
+    return '0';
+  }
+  return numValue.toFixed(decimals);
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Battery, Zap, Shield } from 'lucide-react';
 import { useAuthStore } from '../../store/auth';
 import api from '../../lib/api';
 
@@ -30,11 +31,38 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black opacity-20"></div>
+      
+      <div className="relative z-10 bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">ECar Fleet</h1>
-          <p className="text-gray-600">Управление на електрически автомобили</p>
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full mb-4 shadow-lg">
+            <Zap className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">ECar Fleet Manager</h1>
+          <p className="text-gray-600">Система за управление на електрически автомобили</p>
+        </div>
+
+        {/* Features */}
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-10 h-10 bg-blue-50 rounded-lg mb-2">
+              <Battery className="w-5 h-5 text-blue-600" />
+            </div>
+            <p className="text-xs text-gray-600">Зареждания</p>
+          </div>
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-10 h-10 bg-green-50 rounded-lg mb-2">
+              <Zap className="w-5 h-5 text-green-600" />
+            </div>
+            <p className="text-xs text-gray-600">Енергия</p>
+          </div>
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-10 h-10 bg-purple-50 rounded-lg mb-2">
+              <Shield className="w-5 h-5 text-purple-600" />
+            </div>
+            <p className="text-xs text-gray-600">Сигурност</p>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -75,16 +103,35 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:ring-4 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
           >
-            {loading ? 'Вход...' : 'Вход'}
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Вход...
+              </span>
+            ) : 'Вход в системата'}
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-gray-500">
-          <p>Тестови акаунти:</p>
-          <p className="mt-1">admin@ecar.local / Password123!</p>
-          <p>driver1@ecar.local / Password123!</p>
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <p className="text-xs text-gray-600 text-center mb-3 font-medium">Демо акаунти за тестване:</p>
+          <div className="space-y-2 text-xs">
+            <div className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg">
+              <span className="text-gray-700 font-medium">Администратор:</span>
+              <span className="text-gray-600 font-mono">admin@ecar.local</span>
+            </div>
+            <div className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg">
+              <span className="text-gray-700 font-medium">Шофьор:</span>
+              <span className="text-gray-600 font-mono">driver1@ecar.local</span>
+            </div>
+            <div className="text-center text-gray-500 mt-2">
+              <span className="font-medium">Парола:</span> <span className="font-mono">Password123!</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -1,14 +1,276 @@
+import { useQuery } from '@tanstack/react-query';
+import { Car, Battery, AlertCircle, TrendingUp, DollarSign, Zap, Users, MapPin } from 'lucide-react';
+import { api } from '../../lib/api';
+import { Vehicle, ChargeSession, Station, User } from '../../types';
+import { formatNumber } from '../../lib/utils';
+
 export default function DashboardPage() {
+  // Fetch all data
+  const { data: vehicles = [] } = useQuery<Vehicle[]>({
+    queryKey: ['vehicles'],
+    queryFn: async () => {
+      const { data } = await api.get('/vehicles');
+      return data;
+    },
+  });
+
+  const { data: sessions = [] } = useQuery<ChargeSession[]>({
+    queryKey: ['charge-sessions'],
+    queryFn: async () => {
+      const { data } = await api.get('/charge-sessions');
+      return data;
+    },
+  });
+
+  const { data: stations = [] } = useQuery<Station[]>({
+    queryKey: ['stations'],
+    queryFn: async () => {
+      const { data } = await api.get('/stations');
+      return data;
+    },
+  });
+
+  const { data: users = [] } = useQuery<User[]>({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const { data } = await api.get('/users');
+      return data;
+    },
+  });
+
+  // Calculate statistics
+  const activeVehicles = vehicles.filter(v => v.status === 'active').length;
+  const maintenanceVehicles = vehicles.filter(v => v.status === 'maintenance').length;
+  const pendingSessions = sessions.filter(s => s.status === 'pending_odometer').length;
+  const completedSessions = sessions.filter(s => s.status === 'completed').length;
+  const totalEnergy = sessions.reduce((sum, s) => sum + (Number(s.kwhCharged) || 0), 0);
+  const totalCost = sessions.reduce((sum, s) => sum + (Number(s.priceTotal) || 0), 0);
+  const activeStations = stations.filter(s => s.isActive).length;
+  const activeDrivers = users.filter(u => u.role === 'driver' && u.isActive).length;
+
+  // This month statistics
+  const now = new Date();
+  const thisMonthSessions = sessions.filter(s => {
+    const sessionDate = new Date(s.createdAt);
+    return sessionDate.getMonth() === now.getMonth() && sessionDate.getFullYear() === now.getFullYear();
+  });
+  const thisMonthEnergy = thisMonthSessions.reduce((sum, s) => sum + (Number(s.kwhCharged) || 0), 0);
+  const thisMonthCost = thisMonthSessions.reduce((sum, s) => sum + (Number(s.priceTotal) || 0), 0);
+
+  // Average efficiency
+  const avgKwhPerSession = sessions.length > 0 ? totalEnergy / sessions.length : 0;
+  const avgCostPerSession = sessions.length > 0 ? totalCost / sessions.length : 0;
+
+  // Recent activity
+  const recentSessions = [...sessions]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 5);
+
+  // Vehicles needing attention
+  const vehiclesNeedingAttention = vehicles.filter(v => 
+    v.status === 'maintenance' || 
+    sessions.filter(s => s.vehicleId === v.id && s.status === 'pending_odometer').length > 0
+  );
+
   return (
     <div className="px-4 py-6 sm:px-0">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Табло за управление</h1>
-      <div className="bg-white shadow rounded-lg p-6">
-        <p className="text-gray-600">
-          Добре дошли в системата за управление на електрически автомобили.
-        </p>
-        <p className="text-gray-600 mt-4">
-          Имплементацията на функционалности ще продължи в Sprint 2.
-        </p>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Табло за управление</h1>
+        <p className="text-gray-600 mt-1">Преглед на флота и зареждания</p>
+      </div>
+
+      {/* Alert for pending actions */}
+      {pendingSessions > 0 && (
+        <div className="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+          <div className="flex items-center">
+            <AlertCircle className="w-5 h-5 text-yellow-600 mr-3" />
+            <div>
+              <h3 className="text-yellow-800 font-medium">
+                {pendingSessions} зареждан{pendingSessions === 1 ? 'е' : 'ия'} чака{pendingSessions === 1 ? '' : 'т'} километраж
+              </h3>
+              <p className="text-yellow-700 text-sm">Шофьорите трябва да въведат показания на одометъра</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Statistics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg rounded-lg p-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-sm font-medium opacity-90">Активни автомобили</div>
+            <Car className="w-6 h-6 opacity-80" />
+          </div>
+          <div className="text-4xl font-bold mb-1">{activeVehicles}</div>
+          <div className="text-sm opacity-80">
+            {maintenanceVehicles > 0 && `+${maintenanceVehicles} на поддръжка`}
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg rounded-lg p-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-sm font-medium opacity-90">Общо зареждания</div>
+            <Battery className="w-6 h-6 opacity-80" />
+          </div>
+          <div className="text-4xl font-bold mb-1">{sessions.length}</div>
+          <div className="text-sm opacity-80">{completedSessions} завършени</div>
+        </div>
+
+        <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg rounded-lg p-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-sm font-medium opacity-90">Обща енергия</div>
+            <Zap className="w-6 h-6 opacity-80" />
+          </div>
+          <div className="text-4xl font-bold mb-1">{formatNumber(totalEnergy, 0)}</div>
+          <div className="text-sm opacity-80">kWh заредени</div>
+        </div>
+
+        <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg rounded-lg p-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-sm font-medium opacity-90">Обща стойност</div>
+            <DollarSign className="w-6 h-6 opacity-80" />
+          </div>
+          <div className="text-4xl font-bold mb-1">{formatNumber(totalCost, 0)}</div>
+          <div className="text-sm opacity-80">BGN</div>
+        </div>
+      </div>
+
+      {/* Secondary Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div className="bg-white shadow rounded-lg p-6">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-medium text-gray-600">Този месец</div>
+            <TrendingUp className="w-5 h-5 text-blue-500" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900 mb-1">{thisMonthSessions.length}</div>
+          <div className="text-sm text-gray-600">{formatNumber(thisMonthEnergy, 1)} kWh</div>
+          <div className="text-sm text-gray-600">{formatNumber(thisMonthCost, 2)} BGN</div>
+        </div>
+
+        <div className="bg-white shadow rounded-lg p-6">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-medium text-gray-600">Средно на зареждане</div>
+            <Battery className="w-5 h-5 text-green-500" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900 mb-1">{formatNumber(avgKwhPerSession, 1)}</div>
+          <div className="text-sm text-gray-600">kWh средно</div>
+          <div className="text-sm text-gray-600">{formatNumber(avgCostPerSession, 2)} BGN средно</div>
+        </div>
+
+        <div className="bg-white shadow rounded-lg p-6">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-medium text-gray-600">Станции</div>
+            <MapPin className="w-5 h-5 text-purple-500" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900 mb-1">{activeStations}</div>
+          <div className="text-sm text-gray-600">Активни станции</div>
+          <div className="text-sm text-gray-600">{stations.length} общо</div>
+        </div>
+
+        <div className="bg-white shadow rounded-lg p-6">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-medium text-gray-600">Шофьори</div>
+            <Users className="w-5 h-5 text-orange-500" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900 mb-1">{activeDrivers}</div>
+          <div className="text-sm text-gray-600">Активни шофьори</div>
+          <div className="text-sm text-gray-600">{users.filter(u => u.role === 'driver').length} общо</div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Activity */}
+        <div className="bg-white shadow rounded-lg overflow-hidden">
+          <div className="px-6 py-4 border-b bg-gray-50">
+            <h2 className="text-lg font-semibold text-gray-900">Последна активност</h2>
+          </div>
+          <div className="divide-y divide-gray-200">
+            {recentSessions.length === 0 ? (
+              <div className="p-8 text-center">
+                <Battery className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-600">Няма зареждания</p>
+              </div>
+            ) : (
+              recentSessions.map((session) => (
+                <div key={session.id} className="p-4 hover:bg-gray-50 transition">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <div className="font-medium text-gray-900">
+                        {session.vehicle?.registrationNo}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {session.station?.name}
+                      </div>
+                    </div>
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                      session.status === 'completed' ? 'bg-green-100 text-green-800' :
+                      session.status === 'pending_odometer' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {session.status === 'completed' ? 'Завършено' :
+                       session.status === 'pending_odometer' ? 'Чака одометър' : 'Отказано'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm text-gray-600">
+                    <div>{formatNumber(session.kwhCharged)} kWh</div>
+                    <div className="text-right">{formatNumber(session.priceTotal)} {session.currency}</div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Vehicles Needing Attention */}
+        <div className="bg-white shadow rounded-lg overflow-hidden">
+          <div className="px-6 py-4 border-b bg-gray-50">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-yellow-600" />
+              Автомобили изискващи внимание
+            </h2>
+          </div>
+          <div className="divide-y divide-gray-200">
+            {vehiclesNeedingAttention.length === 0 ? (
+              <div className="p-8 text-center">
+                <Car className="w-12 h-12 text-green-400 mx-auto mb-3" />
+                <p className="text-green-600 font-medium">Всичко е наред!</p>
+                <p className="text-gray-600 text-sm mt-1">Няма автомобили изискващи внимание</p>
+              </div>
+            ) : (
+              vehiclesNeedingAttention.map((vehicle) => {
+                const pendingForVehicle = sessions.filter(
+                  s => s.vehicleId === vehicle.id && s.status === 'pending_odometer'
+                ).length;
+                
+                return (
+                  <div key={vehicle.id} className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <div className="font-medium text-gray-900">
+                          {vehicle.registrationNo}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {vehicle.make} {vehicle.model}
+                        </div>
+                      </div>
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        vehicle.status === 'maintenance' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        {vehicle.status === 'maintenance' ? 'Поддръжка' : 'Активен'}
+                      </span>
+                    </div>
+                    {pendingForVehicle > 0 && (
+                      <div className="text-sm text-yellow-700 bg-yellow-50 px-2 py-1 rounded">
+                        {pendingForVehicle} чакащ{pendingForVehicle === 1 ? 'о' : 'и'} зареждан{pendingForVehicle === 1 ? 'е' : 'ия'}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

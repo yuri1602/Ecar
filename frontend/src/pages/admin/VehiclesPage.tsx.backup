@@ -217,70 +217,70 @@ export default function VehiclesPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Рег. номер
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Автомобил
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Година
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Батерия
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Статус
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Действия
-                    </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Автомобил
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Година
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Батерия
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Статус
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Действия
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredVehicles.map((vehicle) => (
+                  <tr key={vehicle.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{vehicle.registrationNo}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {vehicle.make} {vehicle.model}
+                      </div>
+                      {vehicle.color && (
+                        <div className="text-sm text-gray-500">{vehicle.color}</div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {vehicle.year}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {vehicle.batteryCapacityKwh} kWh
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getStatusBadge(vehicle.status)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button
+                        onClick={() => handleEdit(vehicle)}
+                        className="text-blue-600 hover:text-blue-900 mr-4"
+                        title="Редактирай"
+                      >
+                        <Pencil className="w-4 h-4 inline" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(vehicle.id)}
+                        className={`${
+                          deleteConfirm === vehicle.id
+                            ? 'text-red-600 hover:text-red-900'
+                            : 'text-gray-400 hover:text-red-600'
+                        }`}
+                        title={deleteConfirm === vehicle.id ? 'Натисни отново за потвърждение' : 'Изтрий'}
+                      >
+                        <Trash2 className="w-4 h-4 inline" />
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredVehicles.map((vehicle) => (
-                    <tr key={vehicle.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{vehicle.registrationNo}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {vehicle.make} {vehicle.model}
-                        </div>
-                        {vehicle.color && (
-                          <div className="text-sm text-gray-500">{vehicle.color}</div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {vehicle.year}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {vehicle.batteryCapacityKwh} kWh
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(vehicle.status)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={() => handleEdit(vehicle)}
-                          className="text-blue-600 hover:text-blue-900 mr-4"
-                          title="Редактирай"
-                        >
-                          <Pencil className="w-4 h-4 inline" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(vehicle.id)}
-                          className={`${
-                            deleteConfirm === vehicle.id
-                              ? 'text-red-600 hover:text-red-900'
-                              : 'text-gray-400 hover:text-red-600'
-                          }`}
-                          title={deleteConfirm === vehicle.id ? 'Натисни отново за потвърждение' : 'Изтрий'}
-                        >
-                          <Trash2 className="w-4 h-4 inline" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                ))}
+              </tbody>
+            </table>
             </div>
           </>
         )}

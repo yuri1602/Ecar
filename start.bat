@@ -1,0 +1,3 @@
+@echo off
+echo Starting ECar Fleet Management System...
+powershell -ExecutionPolicy Bypass -File "%~dp0start.ps1"

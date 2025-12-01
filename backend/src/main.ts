@@ -14,6 +14,12 @@ async function bootstrap() {
     credentials: true,
   });
 
+  // Set charset to UTF-8 for all responses
+  app.use((req, res, next) => {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    next();
+  });
+
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({

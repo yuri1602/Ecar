@@ -255,3 +255,32 @@ Proprietary - Internal use only
 **Изготвено:** Ноември 2025  
 **Версия:** 1.0  
 **Автори:** ECar Development Team
+
+
+
+Ето стъпките за стартиране на ECar Fleet Management System:
+
+🚀 Стартиране на проекта
+1. Стартирай Docker контейнерите (PostgreSQL, Redis, pgAdmin)
+2. Стартирай Backend (NestJS)
+Backend ще стартира на: http://localhost:3000
+
+3. Стартирай Frontend (React + Vite)
+Frontend ще стартира на: http://localhost:5173
+
+4. Отвори приложението в браузър
+Отвори: http://localhost:5173
+
+👤 Тестови акаунти
+Всички имат парола: Password123!
+
+Admin: admin@ecar.local
+Fleet Manager: manager@ecar.local
+Driver 1: driver1@ecar.local
+Driver 2: driver2@ecar.local
+🔍 Допълнителни инструменти
+Swagger API Docs: http://localhost:3000/api/docs
+pgAdmin: http://localhost:5050 (admin@admin.com / admin)
+Redis Commander: http://localhost:8081
+🛑 Спиране на проекта
+Важно: Уверете се, че Docker Desktop работи преди да стартирате проекта!

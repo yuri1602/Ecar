@@ -1,0 +1,3 @@
+@echo off
+echo Stopping ECar Fleet Management System...
+powershell -ExecutionPolicy Bypass -File "%~dp0stop.ps1"

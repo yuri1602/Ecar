@@ -57,3 +57,33 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+
+  .animate-slideInRight {
+    animation: slideInRight 0.3s ease-out;
+  }
+
+  .animate-fadeOut {
+    animation: fadeOut 0.2s ease-out;
+  }
+}
