@@ -20,7 +20,7 @@ export class ChargeSessionsService {
 
   async findAll(): Promise<ChargeSession[]> {
     return this.chargeSessionsRepository.find({
-      relations: ['vehicle', 'station', 'tariff'],
+      relations: ['vehicle', 'station', 'tariff', 'chargeCard'],
       order: { startedAt: 'DESC' },
     });
   }
@@ -28,7 +28,7 @@ export class ChargeSessionsService {
   async findOne(id: string): Promise<ChargeSession> {
     const session = await this.chargeSessionsRepository.findOne({
       where: { id },
-      relations: ['vehicle', 'station', 'tariff', 'vehicle.userVehicles', 'vehicle.userVehicles.user'],
+      relations: ['vehicle', 'station', 'tariff', 'chargeCard', 'vehicle.userVehicles', 'vehicle.userVehicles.user'],
     });
     if (!session) {
       throw new NotFoundException(`Charge session with ID ${id} not found`);
@@ -42,12 +42,34 @@ export class ChargeSessionsService {
         vehicleId,
         status: SessionStatus.PENDING_ODOMETER,
       },
-      relations: ['vehicle', 'station'],
+      relations: ['vehicle', 'station', 'chargeCard'],
       order: { startedAt: 'DESC' },
     });
   }
 
   async create(createChargeSessionDto: CreateChargeSessionDto, createdById: string): Promise<ChargeSession> {
+    // Validate that either vehicleId or chargeCardId is provided
+    if (!createChargeSessionDto.vehicleId && !createChargeSessionDto.chargeCardId) {
+      throw new BadRequestException('Either vehicleId or chargeCardId must be provided');
+    }
+
+    // If chargeCardId is provided, get the vehicle from the card
+    let vehicleId = createChargeSessionDto.vehicleId;
+    if (createChargeSessionDto.chargeCardId && !vehicleId) {
+      const cardRepo = this.chargeSessionsRepository.manager.getRepository('ChargeCard');
+      const card = await cardRepo.findOne({
+        where: { id: createChargeSessionDto.chargeCardId },
+        relations: ['vehicle'],
+      });
+      if (!card) {
+        throw new NotFoundException('Charge card not found');
+      }
+      if (!card.vehicleId) {
+        throw new BadRequestException('Charge card is not assigned to any vehicle');
+      }
+      vehicleId = card.vehicleId;
+    }
+
     // Validate that endedAt is after startedAt
     const startedAt = new Date(createChargeSessionDto.startedAt);
     const endedAt = new Date(createChargeSessionDto.endedAt);
@@ -58,6 +80,7 @@ export class ChargeSessionsService {
     // Create the charge session
     const session = this.chargeSessionsRepository.create({
       ...createChargeSessionDto,
+      vehicleId,
       status: SessionStatus.PENDING_ODOMETER,
       createdBy: createdById,
     });

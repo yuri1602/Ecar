@@ -85,5 +85,13 @@ export const analyticsApi = {
   getDashboard: () => api.get('/analytics/dashboard').then(res => res.data),
 };
 
+export const chargeCardsApi = {
+  getAll: () => api.get('/charge-cards').then(res => res.data),
+  getOne: (id: string) => api.get(`/charge-cards/${id}`).then(res => res.data),
+  create: (data: any) => api.post('/charge-cards', data).then(res => res.data),
+  update: (id: string, data: any) => api.patch(`/charge-cards/${id}`, data).then(res => res.data),
+  delete: (id: string) => api.delete(`/charge-cards/${id}`).then(res => res.data),
+};
+
 export { api };
 export default api;

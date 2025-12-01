@@ -248,6 +248,9 @@ export default function VehiclesPage() {
                       Километраж
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Водач
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Статус
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -280,6 +283,16 @@ export default function VehiclesPage() {
                           <span className="font-medium">{getLastOdometer(vehicle.id)}</span>
                           {getLastOdometer(vehicle.id) !== '-' && <span className="ml-1 text-gray-500">км</span>}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {vehicle.assignedDriver ? (
+                          <div className="text-sm">
+                            <div className="font-medium text-gray-900">{vehicle.assignedDriver.fullName}</div>
+                            <div className="text-gray-500 text-xs">{vehicle.assignedDriver.email}</div>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-400">Неприсвоен</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getStatusBadge(vehicle.status)}

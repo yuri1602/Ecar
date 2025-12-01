@@ -5,8 +5,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { UserVehicle } from './user-vehicle.entity';
+import { User } from '../../users/entities/user.entity';
 
 export enum VehicleStatus {
   ACTIVE = 'active',
@@ -56,6 +59,9 @@ export class Vehicle {
   @Column({ type: 'text', nullable: true })
   notes: string;
 
+  @Column({ name: 'assigned_driver_id', type: 'uuid', nullable: true })
+  assignedDriverId: string;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
@@ -63,6 +69,10 @@ export class Vehicle {
   updatedAt: Date;
 
   // Relations
+  @ManyToOne(() => User, { eager: false })
+  @JoinColumn({ name: 'assigned_driver_id' })
+  assignedDriver: User;
+
   @OneToMany(() => UserVehicle, (userVehicle) => userVehicle.vehicle)
   userVehicles: UserVehicle[];
 

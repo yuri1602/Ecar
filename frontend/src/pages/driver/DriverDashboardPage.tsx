@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { AlertCircle, Battery, Car, TrendingUp, Gauge, Clock, CheckCircle } from 'lucide-react';
 import { api } from '../../lib/api';
-import { ChargeSession, Vehicle, OdometerReading } from '../../types';
+import { ChargeSession, Vehicle } from '../../types';
 import { formatDateTime, formatNumber } from '../../lib/utils';
 import { useAuthStore } from '../../store/auth';
 
@@ -19,7 +19,7 @@ export default function DriverDashboardPage() {
   });
 
   // Fetch pending sessions for all user's vehicles
-  const { data: allPendingSessions = [], isLoading: loadingPending } = useQuery<ChargeSession[]>({
+  const { data: allPendingSessions = [] } = useQuery<ChargeSession[]>({
     queryKey: ['my-pending-sessions'],
     queryFn: async () => {
       const allSessions: ChargeSession[] = [];

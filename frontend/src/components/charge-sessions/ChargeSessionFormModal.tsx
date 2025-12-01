@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { X } from 'lucide-react';
-import { Vehicle, Station, Tariff, CreateChargeSessionDto } from '../../types';
+import { Vehicle, Station, Tariff, CreateChargeSessionDto, ChargeCard } from '../../types';
+import { chargeCardsApi } from '../../lib/api';
 
 interface ChargeSessionFormModalProps {
   vehicles: Vehicle[];
@@ -19,8 +21,10 @@ export default function ChargeSessionFormModal({
   onSubmit,
   isSubmitting,
 }: ChargeSessionFormModalProps) {
+  const [useCardEntry, setUseCardEntry] = useState(false);
   const [formData, setFormData] = useState<CreateChargeSessionDto>({
     vehicleId: '',
+    chargeCardId: '',
     stationId: '',
     tariffId: '',
     startedAt: '',
@@ -30,12 +34,21 @@ export default function ChargeSessionFormModal({
     notes: '',
   });
 
+  const { data: chargeCards = [] } = useQuery({
+    queryKey: ['charge-cards'],
+    queryFn: chargeCardsApi.getAll,
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validation
-    if (!formData.vehicleId) {
+    if (!useCardEntry && !formData.vehicleId) {
       alert('Моля, изберете автомобил');
+      return;
+    }
+    if (useCardEntry && !formData.chargeCardId) {
+      alert('Моля, изберете карта за зареждане');
       return;
     }
     if (!formData.stationId) {
@@ -119,26 +132,74 @@ export default function ChargeSessionFormModal({
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Автомобил *
+            {/* Toggle between Card and Vehicle selection */}
+            <div className="md:col-span-2 bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={useCardEntry}
+                  onChange={(e) => {
+                    setUseCardEntry(e.target.checked);
+                    setFormData(prev => ({
+                      ...prev,
+                      vehicleId: '',
+                      chargeCardId: '',
+                    }));
+                  }}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span className="ml-2 text-sm font-medium text-gray-700">
+                  Използвай номер на карта за зареждане
+                </span>
               </label>
-              <select
-                name="vehicleId"
-                value={formData.vehicleId}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
-                disabled={isSubmitting}
-              >
-                <option value="">Избери автомобил</option>
-                {vehicles.filter(v => v.status === 'active').map((vehicle) => (
-                  <option key={vehicle.id} value={vehicle.id}>
-                    {vehicle.registrationNo} - {vehicle.make} {vehicle.model}
-                  </option>
-                ))}
-              </select>
+              <p className="mt-1 ml-6 text-xs text-gray-600">
+                Автомобилът ще бъде определен автоматично според картата
+              </p>
             </div>
+
+            {useCardEntry ? (
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Карта за зареждане *
+                </label>
+                <select
+                  name="chargeCardId"
+                  value={formData.chargeCardId}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                  disabled={isSubmitting}
+                >
+                  <option value="">Избери карта</option>
+                  {chargeCards.filter((c: ChargeCard) => c.isActive).map((card: ChargeCard) => (
+                    <option key={card.id} value={card.id}>
+                      {card.cardNumber} - {card.vehicle?.registrationNo} ({card.vehicle?.make} {card.vehicle?.model})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Автомобил *
+                </label>
+                <select
+                  name="vehicleId"
+                  value={formData.vehicleId}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                  disabled={isSubmitting}
+                >
+                  <option value="">Избери автомобил</option>
+                  {vehicles.filter(v => v.status === 'active').map((vehicle) => (
+                    <option key={vehicle.id} value={vehicle.id}>
+                      {vehicle.registrationNo} - {vehicle.make} {vehicle.model}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">

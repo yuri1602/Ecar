@@ -4,11 +4,11 @@ import { Gauge, AlertCircle, CheckCircle } from 'lucide-react';
 import { api } from '../../lib/api';
 import { ChargeSession, OdometerReading, CreateOdometerDto } from '../../types';
 import { formatDateTime } from '../../lib/utils';
-import { useAuthStore } from '../../store/auth';
+// import { useAuthStore } from '../../store/auth';
 
 export default function OdometerEntryPage() {
   const queryClient = useQueryClient();
-  const { user } = useAuthStore();
+  // const { user } = useAuthStore();
   const [selectedSession, setSelectedSession] = useState<ChargeSession | null>(null);
   const [formData, setFormData] = useState({
     readingKm: '',

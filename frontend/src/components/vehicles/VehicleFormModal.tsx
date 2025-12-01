@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
-import { Vehicle, CreateVehicleDto } from '../../types';
+import { Vehicle, CreateVehicleDto, User } from '../../types';
+import { useQuery } from '@tanstack/react-query';
+import { usersApi } from '../../lib/api';
 
 interface VehicleFormModalProps {
   vehicle?: Vehicle | null;
@@ -10,6 +12,13 @@ interface VehicleFormModalProps {
 }
 
 export default function VehicleFormModal({ vehicle, onClose, onSubmit, isSubmitting }: VehicleFormModalProps) {
+  const { data: users = [] } = useQuery<User[]>({
+    queryKey: ['users'],
+    queryFn: usersApi.getAll,
+  });
+
+  const drivers = users.filter(u => u.role === 'driver');
+
   const [formData, setFormData] = useState<CreateVehicleDto>({
     registrationNo: '',
     make: '',
@@ -21,6 +30,7 @@ export default function VehicleFormModal({ vehicle, onClose, onSubmit, isSubmitt
     status: 'active',
     purchaseDate: '',
     notes: '',
+    assignedDriverId: '',
   });
 
   useEffect(() => {
@@ -36,6 +46,7 @@ export default function VehicleFormModal({ vehicle, onClose, onSubmit, isSubmitt
         status: vehicle.status,
         purchaseDate: vehicle.purchaseDate || '',
         notes: vehicle.notes || '',
+        assignedDriverId: vehicle.assignedDriverId || '',
       });
     }
   }, [vehicle]);
@@ -221,6 +232,26 @@ export default function VehicleFormModal({ vehicle, onClose, onSubmit, isSubmitt
                 <option value="active">Активен</option>
                 <option value="maintenance">Поддръжка</option>
                 <option value="retired">Извън експлоатация</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Присвоен водач
+              </label>
+              <select
+                name="assignedDriverId"
+                value={formData.assignedDriverId}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                disabled={isSubmitting}
+              >
+                <option value="">-- Няма присвоен водач --</option>
+                {drivers.map(driver => (
+                  <option key={driver.id} value={driver.id}>
+                    {driver.fullName} ({driver.email})
+                  </option>
+                ))}
               </select>
             </div>
 

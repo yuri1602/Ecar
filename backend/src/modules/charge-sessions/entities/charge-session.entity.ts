@@ -11,6 +11,7 @@ import { Vehicle } from '../../vehicles/entities/vehicle.entity';
 import { Station } from '../../stations/entities/station.entity';
 import { Tariff } from '../../tariffs/entities/tariff.entity';
 import { User } from '../../users/entities/user.entity';
+import { ChargeCard } from '../../charge-cards/entities/charge-card.entity';
 
 export enum SessionStatus {
   PENDING_ODOMETER = 'pending_odometer',
@@ -29,6 +30,13 @@ export class ChargeSession {
   @ManyToOne(() => Vehicle, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'vehicle_id' })
   vehicle: Vehicle;
+
+  @Column({ name: 'charge_card_id', nullable: true })
+  chargeCardId: string;
+
+  @ManyToOne(() => ChargeCard, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'charge_card_id' })
+  chargeCard: ChargeCard;
 
   @Column({ name: 'station_id', nullable: true })
   stationId: string;

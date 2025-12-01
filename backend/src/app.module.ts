@@ -9,6 +9,7 @@ import { ChargeSessionsModule } from './modules/charge-sessions/charge-sessions.
 import { OdometerModule } from './modules/odometer/odometer.module';
 import { StationsModule } from './modules/stations/stations.module';
 import { TariffsModule } from './modules/tariffs/tariffs.module';
+import { ChargeCardsModule } from './modules/charge-cards/charge-cards.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 
@@ -58,6 +59,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
     OdometerModule,
     StationsModule,
     TariffsModule,
+    ChargeCardsModule,
     NotificationsModule,
     AnalyticsModule,
   ],

@@ -17,12 +17,24 @@ export class VehiclesService {
 
   async findAll(): Promise<Vehicle[]> {
     return this.vehiclesRepository.find({
+      relations: ['assignedDriver'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findByAssignedDriver(driverId: string): Promise<Vehicle[]> {
+    return this.vehiclesRepository.find({
+      where: { assignedDriverId: driverId },
+      relations: ['assignedDriver'],
       order: { createdAt: 'DESC' },
     });
   }
 
   async findOne(id: string): Promise<Vehicle> {
-    const vehicle = await this.vehiclesRepository.findOne({ where: { id } });
+    const vehicle = await this.vehiclesRepository.findOne({ 
+      where: { id },
+      relations: ['assignedDriver'],
+    });
     if (!vehicle) {
       throw new NotFoundException(`Vehicle with ID ${id} not found`);
     }

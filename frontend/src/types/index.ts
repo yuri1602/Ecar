@@ -20,6 +20,8 @@ export interface Vehicle {
   status: 'active' | 'maintenance' | 'retired';
   purchaseDate?: string;
   notes?: string;
+  assignedDriverId?: string;
+  assignedDriver?: User;
   createdAt: string;
   updatedAt: string;
 }
@@ -58,6 +60,8 @@ export interface ChargeSession {
   station?: Station;
   tariffId: string;
   tariff?: Tariff;
+  chargeCardId?: string;
+  chargeCard?: ChargeCard;
   startedAt: string;
   endedAt: string;
   kwhCharged: number;
@@ -111,10 +115,12 @@ export interface CreateVehicleDto {
   status?: 'active' | 'maintenance' | 'retired';
   purchaseDate?: string;
   notes?: string;
+  assignedDriverId?: string;
 }
 
 export interface CreateChargeSessionDto {
-  vehicleId: string;
+  vehicleId?: string;
+  chargeCardId?: string;
   stationId: string;
   tariffId: string;
   startedAt: string;
@@ -160,4 +166,24 @@ export interface CreateUserDto {
   phone?: string;
   role: 'admin' | 'fleet_manager' | 'driver';
   password: string;
+}
+
+export interface ChargeCard {
+  id: string;
+  cardNumber: string;
+  vehicleId: string;
+  vehicle?: Vehicle;
+  provider?: string;
+  isActive: boolean;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateChargeCardDto {
+  cardNumber: string;
+  vehicleId: string;
+  provider?: string;
+  isActive?: boolean;
+  notes?: string;
 }

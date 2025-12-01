@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Battery, Clock } from 'lucide-react';
+import { Plus, Battery, Clock, CreditCard } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { api } from '../../lib/api';
 import { ChargeSession, Vehicle, Station, Tariff } from '../../types';
@@ -166,6 +166,12 @@ export default function ChargeSessionsPage() {
                       <div className="text-sm text-gray-500">
                         {session.vehicle?.make} {session.vehicle?.model}
                       </div>
+                      {session.chargeCard && (
+                        <div className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                          <CreditCard className="w-3 h-3" />
+                          Карта: {session.chargeCard.cardNumber}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{session.station?.name}</div>

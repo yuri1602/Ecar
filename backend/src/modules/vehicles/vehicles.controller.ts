@@ -25,10 +25,10 @@ export class VehiclesController {
 
   @Get('my-vehicles')
   @Roles(UserRole.DRIVER)
-  @ApiOperation({ summary: 'Get vehicles assigned to current user' })
-  @ApiResponse({ status: 200, description: 'Returns user assigned vehicles' })
+  @ApiOperation({ summary: 'Get vehicles assigned to current driver' })
+  @ApiResponse({ status: 200, description: 'Returns driver assigned vehicles' })
   findMyVehicles(@CurrentUser() user: any) {
-    return this.vehiclesService.findByUserId(user.id);
+    return this.vehiclesService.findByAssignedDriver(user.id);
   }
 
   @Get(':id')

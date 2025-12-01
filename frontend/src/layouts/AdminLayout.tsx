@@ -1,6 +1,6 @@
 import { Outlet, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/auth';
-import { Car, BarChart3, Zap, LogOut, MapPin, DollarSign, Users } from 'lucide-react';
+import { Car, BarChart3, Zap, LogOut, MapPin, DollarSign, Users, CreditCard } from 'lucide-react';
 
 export default function AdminLayout() {
   const { user, logout } = useAuthStore();
@@ -50,6 +50,13 @@ export default function AdminLayout() {
                 >
                   <DollarSign className="h-4 w-4 mr-2" />
                   Тарифи
+                </Link>
+                <Link
+                  to="/charge-cards"
+                  className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-blue-500 text-sm font-medium text-gray-900"
+                >
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Карти
                 </Link>
                 <Link
                   to="/users"

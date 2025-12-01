@@ -2,10 +2,15 @@ import { IsString, IsNotEmpty, IsNumber, IsOptional, IsDateString, IsUUID, Min }
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateChargeSessionDto {
-  @ApiProperty({ example: '10000000-0000-0000-0000-000000000001', description: 'Vehicle ID' })
+  @ApiPropertyOptional({ example: '10000000-0000-0000-0000-000000000001', description: 'Vehicle ID (required if no charge card)' })
+  @IsOptional()
   @IsUUID()
-  @IsNotEmpty()
-  vehicleId: string;
+  vehicleId?: string;
+
+  @ApiPropertyOptional({ example: '40000000-0000-0000-0000-000000000001', description: 'Charge Card ID (required if no vehicle)' })
+  @IsOptional()
+  @IsUUID()
+  chargeCardId?: string;
 
   @ApiProperty({ example: '20000000-0000-0000-0000-000000000001', description: 'Station ID' })
   @IsUUID()

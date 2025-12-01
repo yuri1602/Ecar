@@ -10,6 +10,7 @@ import ChargeSessionsPage from './pages/admin/ChargeSessionsPage';
 import StationsPage from './pages/admin/StationsPage';
 import TariffsPage from './pages/admin/TariffsPage';
 import UsersPage from './pages/admin/UsersPage';
+import ChargeCardsPage from './pages/admin/ChargeCardsPage';
 import DriverDashboardPage from './pages/driver/DriverDashboardPage';
 import OdometerEntryPage from './pages/driver/OdometerEntryPage';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -61,6 +62,7 @@ function App() {
             <Route path="/charge-sessions" element={<ChargeSessionsPage />} />
             <Route path="/stations" element={<StationsPage />} />
             <Route path="/tariffs" element={<TariffsPage />} />
+            <Route path="/charge-cards" element={<ChargeCardsPage />} />
             <Route path="/users" element={<UsersPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
