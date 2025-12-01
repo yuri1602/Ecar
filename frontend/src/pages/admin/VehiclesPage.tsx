@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Pencil, Trash2, Car, Search, Filter } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { api } from '../../lib/api';
 import { Vehicle, CreateVehicleDto } from '../../types';
 import VehicleFormModal from '../../components/vehicles/VehicleFormModal';
@@ -22,6 +23,23 @@ export default function VehiclesPage() {
     },
   });
 
+  // Fetch all odometer readings
+  const { data: odometerReadings = [] } = useQuery({
+    queryKey: ['odometer'],
+    queryFn: async () => {
+      const { data } = await api.get('/odometer');
+      return data;
+    },
+  });
+
+  // Get last odometer reading for a vehicle
+  const getLastOdometer = (vehicleId: string) => {
+    const vehicleReadings = odometerReadings
+      .filter((reading: any) => reading.vehicleId === vehicleId)
+      .sort((a: any, b: any) => new Date(b.readingAt).getTime() - new Date(a.readingAt).getTime());
+    return vehicleReadings[0]?.readingKm || '-';
+  };
+
   // Create vehicle mutation
   const createMutation = useMutation({
     mutationFn: async (vehicleData: CreateVehicleDto) => {
@@ -31,10 +49,10 @@ export default function VehiclesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       setIsModalOpen(false);
-      alert('Автомобилът е създаден успешно!');
+      toast.success('Автомобилът е създаден успешно!');
     },
     onError: (error: any) => {
-      alert(error.response?.data?.message || 'Грешка при създаване на автомобил');
+      toast.error(error.response?.data?.message || 'Грешка при създаване на автомобил');
     },
   });
 
@@ -48,10 +66,10 @@ export default function VehiclesPage() {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       setIsModalOpen(false);
       setEditingVehicle(null);
-      alert('Автомобилът е обновен успешно!');
+      toast.success('Автомобилът е обновен успешно!');
     },
     onError: (error: any) => {
-      alert(error.response?.data?.message || 'Грешка при обновяване на автомобил');
+      toast.error(error.response?.data?.message || 'Грешка при обновяване на автомобил');
     },
   });
 
@@ -63,10 +81,10 @@ export default function VehiclesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       setDeleteConfirm(null);
-      alert('Автомобилът е изтрит успешно!');
+      toast.success('Автомобилът е изтрит успешно!');
     },
     onError: (error: any) => {
-      alert(error.response?.data?.message || 'Грешка при изтриване на автомобил');
+      toast.error(error.response?.data?.message || 'Грешка при изтриване на автомобил');
       setDeleteConfirm(null);
     },
   });
@@ -227,6 +245,9 @@ export default function VehiclesPage() {
                       Батерия
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Километраж
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Статус
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -253,6 +274,12 @@ export default function VehiclesPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {vehicle.batteryCapacityKwh} kWh
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div className="flex items-center">
+                          <span className="font-medium">{getLastOdometer(vehicle.id)}</span>
+                          {getLastOdometer(vehicle.id) !== '-' && <span className="ml-1 text-gray-500">км</span>}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getStatusBadge(vehicle.status)}

@@ -131,3 +131,33 @@ export interface CreateOdometerDto {
   readingAt: string;
   notes?: string;
 }
+
+export interface CreateStationDto {
+  name: string;
+  location?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  provider?: string;
+  powerKw?: number;
+  connectorTypes?: string[];
+  isActive?: boolean;
+}
+
+export interface CreateTariffDto {
+  name: string;
+  provider?: string;
+  pricePerKwh: number;
+  currency?: string;
+  validFrom?: string;
+  validTo?: string;
+  isActive?: boolean;
+}
+
+export interface CreateUserDto {
+  email: string;
+  fullName: string;
+  phone?: string;
+  role: 'admin' | 'fleet_manager' | 'driver';
+  password: string;
+}

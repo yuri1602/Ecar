@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Battery, Clock } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { api } from '../../lib/api';
 import { ChargeSession, Vehicle, Station, Tariff } from '../../types';
 import { formatDateTime, formatNumber } from '../../lib/utils';
@@ -55,10 +56,10 @@ export default function ChargeSessionsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['charge-sessions'] });
       setIsModalOpen(false);
-      alert('Сесията за зареждане е създадена успешно!');
+      toast.success('Сесията за зареждане е създадена успешно!');
     },
     onError: (error: any) => {
-      alert(error.response?.data?.message || 'Грешка при създаване на сесия');
+      toast.error(error.response?.data?.message || 'Грешка при създаване на сесия');
     },
   });
 

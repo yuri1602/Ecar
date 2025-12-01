@@ -1,6 +1,6 @@
 import { Outlet, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/auth';
-import { Car, BarChart3, Zap, LogOut } from 'lucide-react';
+import { Car, BarChart3, Zap, LogOut, MapPin, DollarSign, Users } from 'lucide-react';
 
 export default function AdminLayout() {
   const { user, logout } = useAuthStore();
@@ -15,7 +15,7 @@ export default function AdminLayout() {
                 <Car className="h-8 w-8 text-blue-600" />
                 <span className="ml-2 text-xl font-bold text-gray-900">ECar Fleet</span>
               </div>
-              <div className="hidden sm:ml-8 sm:flex sm:space-x-8">
+              <div className="hidden sm:ml-8 sm:flex sm:space-x-4">
                 <Link
                   to="/"
                   className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-blue-500 text-sm font-medium text-gray-900"
@@ -36,6 +36,27 @@ export default function AdminLayout() {
                 >
                   <Zap className="h-4 w-4 mr-2" />
                   Зареждания
+                </Link>
+                <Link
+                  to="/stations"
+                  className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-blue-500 text-sm font-medium text-gray-900"
+                >
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Станции
+                </Link>
+                <Link
+                  to="/tariffs"
+                  className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-blue-500 text-sm font-medium text-gray-900"
+                >
+                  <DollarSign className="h-4 w-4 mr-2" />
+                  Тарифи
+                </Link>
+                <Link
+                  to="/users"
+                  className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-blue-500 text-sm font-medium text-gray-900"
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Потребители
                 </Link>
               </div>
             </div>

@@ -17,6 +17,11 @@ async function bootstrap() {
   // Set charset to UTF-8 for all responses
   app.use((req, res, next) => {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    const originalJson = res.json;
+    res.json = function(body) {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      return originalJson.call(this, body);
+    };
     next();
   });
 
