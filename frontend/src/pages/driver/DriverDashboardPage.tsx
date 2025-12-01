@@ -16,6 +16,9 @@ export default function DriverDashboardPage() {
       const { data } = await api.get('/vehicles/my-vehicles');
       return data;
     },
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Fetch pending sessions for all user's vehicles
@@ -30,6 +33,9 @@ export default function DriverDashboardPage() {
       return allSessions;
     },
     enabled: vehicles.length > 0,
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Fetch recent charge sessions
@@ -39,6 +45,9 @@ export default function DriverDashboardPage() {
       const { data } = await api.get('/charge-sessions');
       return data.slice(0, 5); // Last 5 sessions
     },
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Calculate statistics
