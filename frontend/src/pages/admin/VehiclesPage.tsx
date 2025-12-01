@@ -44,12 +44,24 @@ export default function VehiclesPage() {
 
   // Create vehicle mutation
   const createMutation = useMutation({
-    mutationFn: async (vehicleData: CreateVehicleDto) => {
-      const { data } = await api.post('/vehicles', vehicleData);
-      return data;
+    mutationFn: async ({ vehicleData, initialOdometer }: { vehicleData: CreateVehicleDto; initialOdometer?: number }) => {
+      const { data: vehicle } = await api.post('/vehicles', vehicleData);
+      
+      // If initial odometer is provided, create odometer reading
+      if (initialOdometer && initialOdometer > 0) {
+        await api.post('/odometer', {
+          vehicleId: vehicle.id,
+          readingKm: initialOdometer,
+          readingAt: new Date().toISOString(),
+          notes: 'Начално показание при добавяне на автомобила',
+        });
+      }
+      
+      return vehicle;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      queryClient.invalidateQueries({ queryKey: ['odometer'] });
       setIsModalOpen(false);
       toast.success('Автомобилът е създаден успешно!');
     },
@@ -111,11 +123,11 @@ export default function VehiclesPage() {
     setEditingVehicle(null);
   };
 
-  const handleSubmit = (data: CreateVehicleDto) => {
+  const handleSubmit = (data: CreateVehicleDto, initialOdometer?: number) => {
     if (editingVehicle) {
       updateMutation.mutate({ id: editingVehicle.id, data });
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate({ vehicleData: data, initialOdometer });
     }
   };
 

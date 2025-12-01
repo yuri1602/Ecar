@@ -12,6 +12,9 @@ export default function DashboardPage() {
       const { data } = await api.get('/vehicles');
       return data;
     },
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: sessions = [] } = useQuery<ChargeSession[]>({
@@ -20,6 +23,9 @@ export default function DashboardPage() {
       const { data } = await api.get('/charge-sessions');
       return data;
     },
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: stations = [] } = useQuery<Station[]>({
@@ -28,6 +34,9 @@ export default function DashboardPage() {
       const { data } = await api.get('/stations');
       return data;
     },
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: users = [] } = useQuery<User[]>({
@@ -36,6 +45,9 @@ export default function DashboardPage() {
       const { data } = await api.get('/users');
       return data;
     },
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Calculate statistics

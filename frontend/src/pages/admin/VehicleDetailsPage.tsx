@@ -338,8 +338,8 @@ export default function VehicleDetailsPage() {
                       <p className="text-xs text-gray-500">{formatDate(session.startedAt)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-semibold text-gray-900">{session.kwhCharged} kWh</p>
-                      <p className="text-xs text-gray-500">{session.priceTotal?.toFixed(2)} лв</p>
+                      <p className="text-sm font-semibold text-gray-900">{Number(session.kwhCharged).toFixed(2)} kWh</p>
+                      <p className="text-xs text-gray-500">{Number(session.priceTotal || 0).toFixed(2)} лв</p>
                     </div>
                   </div>
                 </div>
@@ -379,13 +379,13 @@ export default function VehicleDetailsPage() {
                       {reading.readingKm.toLocaleString()} км
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {reading.distanceFromPreviousKm ? `${reading.distanceFromPreviousKm} км` : '-'}
+                      {reading.distanceFromPreviousKm ? `${Number(reading.distanceFromPreviousKm).toFixed(0)} км` : '-'}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {reading.kwhPer100km ? `${reading.kwhPer100km} kWh` : '-'}
+                      {reading.kwhPer100km ? `${Number(reading.kwhPer100km).toFixed(2)} kWh` : '-'}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {reading.costPer100km ? `${reading.costPer100km} лв` : '-'}
+                      {reading.costPer100km ? `${Number(reading.costPer100km).toFixed(2)} лв` : '-'}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500">{reading.notes || '-'}</td>
                   </tr>

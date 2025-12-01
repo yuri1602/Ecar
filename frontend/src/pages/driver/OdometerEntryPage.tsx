@@ -57,6 +57,8 @@ export default function OdometerEntryPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pending-sessions'] });
       queryClient.invalidateQueries({ queryKey: ['latest-odometer'] });
+      queryClient.invalidateQueries({ queryKey: ['charge-sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['odometer'] });
       setSelectedSession(null);
       setFormData({
         readingKm: '',
