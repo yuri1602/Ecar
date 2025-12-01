@@ -1,6 +1,8 @@
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { AlertCircle, Battery, Car, TrendingUp, Gauge, Clock, CheckCircle } from 'lucide-react';
+import { AlertCircle, Battery, Car, TrendingUp, Gauge, Clock, CheckCircle, Zap, DollarSign, MapPin } from 'lucide-react';
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { api } from '../../lib/api';
 import { ChargeSession, Vehicle } from '../../types';
 import { formatDateTime, formatNumber } from '../../lib/utils';
@@ -38,28 +40,123 @@ export default function DriverDashboardPage() {
     refetchOnWindowFocus: true,
   });
 
-  // Fetch recent charge sessions
-  const { data: recentSessions = [] } = useQuery<ChargeSession[]>({
+  // Fetch all charge sessions for statistics
+  const { data: allSessions = [] } = useQuery<ChargeSession[]>({
     queryKey: ['charge-sessions'],
     queryFn: async () => {
       const { data } = await api.get('/charge-sessions');
-      return data.slice(0, 5); // Last 5 sessions
+      return data;
     },
     staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
 
+  // Filter only my sessions
+  const mySessions = allSessions.filter(s => 
+    vehicles.some(v => v.id === s.vehicleId)
+  );
+  const recentSessions = mySessions.slice(0, 5);
+
   // Calculate statistics
   const pendingCount = allPendingSessions.length;
   const totalVehicles = vehicles.length;
-  const completedThisMonth = recentSessions.filter(s => 
+  const completedThisMonth = mySessions.filter(s => 
     s.status === 'completed' && 
     new Date(s.createdAt).getMonth() === new Date().getMonth()
   ).length;
-  const totalEnergyThisMonth = recentSessions
+  const totalEnergyThisMonth = mySessions
     .filter(s => new Date(s.createdAt).getMonth() === new Date().getMonth())
     .reduce((sum, s) => sum + (Number(s.kwhCharged) || 0), 0);
+
+  // Chart data - Energy over time (last 30 days)
+  const energyChartData = React.useMemo(() => {
+    const last30Days = new Date();
+    last30Days.setDate(last30Days.getDate() - 30);
+
+    const dayMap = new Map<string, number>();
+    
+    mySessions
+      .filter(s => new Date(s.createdAt) >= last30Days)
+      .forEach(session => {
+        const date = new Date(session.createdAt).toISOString().split('T')[0];
+        dayMap.set(date, (dayMap.get(date) || 0) + Number(session.kwhCharged || 0));
+      });
+
+    return Array.from(dayMap.entries())
+      .map(([date, kwh]) => ({
+        date: new Date(date).toLocaleDateString('bg-BG', { month: 'short', day: 'numeric' }),
+        kwh: Number(kwh.toFixed(2))
+      }))
+      .sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return dateA.getTime() - dateB.getTime();
+      })
+      .slice(-14); // Last 14 days
+  }, [mySessions]);
+
+  // Chart data - Cost over time (last 30 days)
+  const costChartData = React.useMemo(() => {
+    const last30Days = new Date();
+    last30Days.setDate(last30Days.getDate() - 30);
+
+    const dayMap = new Map<string, number>();
+    
+    mySessions
+      .filter(s => new Date(s.createdAt) >= last30Days)
+      .forEach(session => {
+        const date = new Date(session.createdAt).toISOString().split('T')[0];
+        dayMap.set(date, (dayMap.get(date) || 0) + Number(session.priceTotal || 0));
+      });
+
+    return Array.from(dayMap.entries())
+      .map(([date, cost]) => ({
+        date: new Date(date).toLocaleDateString('bg-BG', { month: 'short', day: 'numeric' }),
+        cost: Number(cost.toFixed(2))
+      }))
+      .sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return dateA.getTime() - dateB.getTime();
+      })
+      .slice(-14); // Last 14 days
+  }, [mySessions]);
+
+  // Chart data - Sessions by station
+  const sessionsByStation = React.useMemo(() => {
+    const stationMap = new Map<string, number>();
+    
+    mySessions.forEach(session => {
+      if (session.station?.name) {
+        const name = session.station.name;
+        stationMap.set(name, (stationMap.get(name) || 0) + 1);
+      }
+    });
+
+    return Array.from(stationMap.entries())
+      .map(([station, count]) => ({ station, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5); // Top 5 stations
+  }, [mySessions]);
+
+  // Chart data - Sessions by vehicle
+  const sessionsByVehicle = React.useMemo(() => {
+    const vehicleMap = new Map<string, number>();
+    
+    mySessions.forEach(session => {
+      if (session.vehicle?.registrationNo) {
+        const regNo = session.vehicle.registrationNo;
+        vehicleMap.set(regNo, (vehicleMap.get(regNo) || 0) + 1);
+      }
+    });
+
+    return Array.from(vehicleMap.entries())
+      .map(([vehicle, count]) => ({ vehicle, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [mySessions]);
+
+  const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
   return (
     <div className="px-4 py-6 sm:px-0">
@@ -130,6 +227,211 @@ export default function DriverDashboardPage() {
           <div className="text-sm text-gray-500 mt-1">kWh заредени</div>
         </div>
       </div>
+
+      {/* Charts Section */}
+      {mySessions.length > 0 && (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* Energy Chart */}
+            <div className="bg-white shadow rounded-lg overflow-hidden">
+              <div className="px-6 py-4 border-b bg-gray-50">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-purple-600" />
+                  Енергия последните 14 дни
+                </h2>
+              </div>
+              <div className="p-6">
+                {energyChartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LineChart data={energyChartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                      <YAxis tick={{ fontSize: 12 }} />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="kwh" stroke="#8B5CF6" strokeWidth={2} name="kWh" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-[250px] flex items-center justify-center text-gray-500">
+                    Няма данни за показване
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Cost Chart */}
+            <div className="bg-white shadow rounded-lg overflow-hidden">
+              <div className="px-6 py-4 border-b bg-gray-50">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-orange-600" />
+                  Разходи последните 14 дни
+                </h2>
+              </div>
+              <div className="p-6">
+                {costChartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={costChartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                      <YAxis tick={{ fontSize: 12 }} />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="cost" fill="#F59E0B" name="BGN" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-[250px] flex items-center justify-center text-gray-500">
+                    Няма данни за показване
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* Sessions by Station */}
+            <div className="bg-white shadow rounded-lg overflow-hidden">
+              <div className="px-6 py-4 border-b bg-gray-50">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-green-600" />
+                  Зареждания по станция
+                </h2>
+              </div>
+              <div className="p-6">
+                {sessionsByStation.length > 0 ? (
+                  <div className="flex flex-col lg:flex-row items-center gap-6">
+                    <ResponsiveContainer width="50%" height={200}>
+                      <PieChart>
+                        <Pie
+                          data={sessionsByStation}
+                          dataKey="count"
+                          nameKey="station"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          label
+                        >
+                          {sessionsByStation.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="flex-1 space-y-2">
+                      {sessionsByStation.map((item, index) => (
+                        <div key={item.station} className="flex items-center gap-2">
+                          <div 
+                            className="w-4 h-4 rounded" 
+                            style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                          />
+                          <span className="text-sm text-gray-700">
+                            {item.station}: <span className="font-semibold">{item.count}</span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-[200px] flex items-center justify-center text-gray-500">
+                    Няма данни за показване
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Sessions by Vehicle */}
+            {sessionsByVehicle.length > 1 && (
+              <div className="bg-white shadow rounded-lg overflow-hidden">
+                <div className="px-6 py-4 border-b bg-gray-50">
+                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <Car className="w-5 h-5 text-blue-600" />
+                    Зареждания по автомобил
+                  </h2>
+                </div>
+                <div className="p-6">
+                  <div className="flex flex-col lg:flex-row items-center gap-6">
+                    <ResponsiveContainer width="50%" height={200}>
+                      <PieChart>
+                        <Pie
+                          data={sessionsByVehicle}
+                          dataKey="count"
+                          nameKey="vehicle"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          label
+                        >
+                          {sessionsByVehicle.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="flex-1 space-y-2">
+                      {sessionsByVehicle.map((item, index) => (
+                        <div key={item.vehicle} className="flex items-center gap-2">
+                          <div 
+                            className="w-4 h-4 rounded" 
+                            style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                          />
+                          <span className="text-sm text-gray-700">
+                            {item.vehicle}: <span className="font-semibold">{item.count}</span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Summary Statistics */}
+            {sessionsByVehicle.length === 1 && (
+              <div className="bg-white shadow rounded-lg overflow-hidden">
+                <div className="px-6 py-4 border-b bg-gray-50">
+                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-blue-600" />
+                    Обобщена статистика
+                  </h2>
+                </div>
+                <div className="p-6">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Общо зареждания</span>
+                      <span className="text-2xl font-bold text-gray-900">{mySessions.length}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Обща енергия</span>
+                      <span className="text-2xl font-bold text-purple-600">
+                        {formatNumber(mySessions.reduce((sum, s) => sum + Number(s.kwhCharged || 0), 0), 1)} kWh
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Общи разходи</span>
+                      <span className="text-2xl font-bold text-orange-600">
+                        {formatNumber(mySessions.reduce((sum, s) => sum + Number(s.priceTotal || 0), 0), 2)} BGN
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Средна цена/kWh</span>
+                      <span className="text-2xl font-bold text-green-600">
+                        {formatNumber(
+                          mySessions.reduce((sum, s) => sum + Number(s.priceTotal || 0), 0) / 
+                          mySessions.reduce((sum, s) => sum + Number(s.kwhCharged || 0), 0),
+                          2
+                        )} BGN
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pending Sessions */}
