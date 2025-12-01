@@ -1,12 +1,14 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Pencil, Trash2, Car, Search, Filter } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Pencil, Trash2, Car, Search, Filter, Eye } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { api } from '../../lib/api';
 import { Vehicle, CreateVehicleDto } from '../../types';
 import VehicleFormModal from '../../components/vehicles/VehicleFormModal';
 
 export default function VehiclesPage() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
@@ -76,15 +78,16 @@ export default function VehiclesPage() {
   // Delete vehicle mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/vehicles/${id}`);
+      const response = await api.delete(`/vehicles/${id}`);
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       setDeleteConfirm(null);
-      toast.success('Автомобилът е изтрит успешно!');
+      toast.success('Автомобилът е премахнат успешно!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Грешка при изтриване на автомобил');
+      toast.error(error.response?.data?.message || 'Грешка при премахване на автомобил');
       setDeleteConfirm(null);
     },
   });
@@ -299,8 +302,15 @@ export default function VehiclesPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
+                          onClick={() => navigate(`/vehicles/${vehicle.id}`)}
+                          className="text-green-600 hover:text-green-900 mr-3"
+                          title="Виж детайли"
+                        >
+                          <Eye className="w-4 h-4 inline" />
+                        </button>
+                        <button
                           onClick={() => handleEdit(vehicle)}
-                          className="text-blue-600 hover:text-blue-900 mr-4"
+                          className="text-blue-600 hover:text-blue-900 mr-3"
                           title="Редактирай"
                         >
                           <Pencil className="w-4 h-4 inline" />

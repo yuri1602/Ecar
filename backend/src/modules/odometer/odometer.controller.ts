@@ -4,6 +4,7 @@ import { OdometerService } from './odometer.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { UserRole } from '../users/entities/user.entity';
 import { CreateOdometerDto } from './dto/create-odometer.dto';
 
@@ -34,7 +35,11 @@ export class OdometerController {
   @ApiResponse({ status: 201, description: 'Odometer reading created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid reading or validation failed' })
   @ApiResponse({ status: 404, description: 'Session not found' })
-  create(@Body() createOdometerDto: CreateOdometerDto) {
+  create(@Body() createOdometerDto: CreateOdometerDto, @CurrentUser() user: any) {
+    if (!user || !user.id) {
+      throw new Error('User not authenticated');
+    }
+    createOdometerDto.enteredBy = user.id;
     return this.odometerService.create(createOdometerDto);
   }
 }

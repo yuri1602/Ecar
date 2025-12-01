@@ -26,4 +26,7 @@ export class CreateOdometerDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  // This field is set automatically by the controller from JWT token
+  enteredBy?: string;
 }

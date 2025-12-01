@@ -17,13 +17,13 @@ export class Tariff {
   @Column({ length: 100, nullable: true })
   provider: string;
 
-  @Column({ name: 'price_per_kwh', type: 'decimal', precision: 8, scale: 4 })
+  @Column({ name: 'price_per_kwh', type: 'decimal', precision: 8, scale: 4, default: 0 })
   pricePerKwh: number;
 
   @Column({ length: 3, default: 'BGN' })
   currency: string;
 
-  @Column({ name: 'valid_from', type: 'date' })
+  @Column({ name: 'valid_from', type: 'date', nullable: true })
   validFrom: Date;
 
   @Column({ name: 'valid_until', type: 'date', nullable: true })

@@ -1,15 +1,15 @@
-import { IsString, IsNotEmpty, IsNumber, IsOptional, IsDateString, IsUUID, Min } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional, IsDateString, IsUUID, Min, ValidateIf } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateChargeSessionDto {
   @ApiPropertyOptional({ example: '10000000-0000-0000-0000-000000000001', description: 'Vehicle ID (required if no charge card)' })
-  @IsOptional()
-  @IsUUID()
+  @ValidateIf((o) => !o.chargeCardId || o.vehicleId)
+  @IsUUID('4', { message: 'vehicleId must be a valid UUID' })
   vehicleId?: string;
 
   @ApiPropertyOptional({ example: '40000000-0000-0000-0000-000000000001', description: 'Charge Card ID (required if no vehicle)' })
-  @IsOptional()
-  @IsUUID()
+  @ValidateIf((o) => !o.vehicleId || o.chargeCardId)
+  @IsUUID('4', { message: 'chargeCardId must be a valid UUID' })
   chargeCardId?: string;
 
   @ApiProperty({ example: '20000000-0000-0000-0000-000000000001', description: 'Station ID' })

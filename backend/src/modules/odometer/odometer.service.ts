@@ -30,7 +30,7 @@ export class OdometerService {
   }
 
   async create(createOdometerDto: CreateOdometerDto): Promise<OdometerReading> {
-    const { vehicleId, sessionId, readingKm, readingAt, notes } = createOdometerDto;
+    const { vehicleId, sessionId, readingKm, readingAt, enteredBy, notes } = createOdometerDto;
 
     // Verify charge session exists and is pending
     const session = await this.chargeSessionRepository.findOne({
@@ -79,6 +79,7 @@ export class OdometerService {
       sessionId,
       readingKm,
       readingAt: new Date(readingAt),
+      enteredBy,
       notes,
     });
     const savedOdometer = await this.odometerRepository.save(odometer);

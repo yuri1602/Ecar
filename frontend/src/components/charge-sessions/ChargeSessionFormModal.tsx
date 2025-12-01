@@ -80,7 +80,14 @@ export default function ChargeSessionFormModal({
       return;
     }
 
-    onSubmit(formData);
+    // Clean up empty strings to undefined for proper validation
+    const cleanedData: CreateChargeSessionDto = {
+      ...formData,
+      vehicleId: formData.vehicleId || undefined,
+      chargeCardId: formData.chargeCardId || undefined,
+    };
+
+    onSubmit(cleanedData);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {

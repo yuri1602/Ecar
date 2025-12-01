@@ -19,6 +19,7 @@ export interface Vehicle {
   color?: string;
   status: 'active' | 'maintenance' | 'retired';
   purchaseDate?: string;
+  purchasePrice?: number;
   notes?: string;
   assignedDriverId?: string;
   assignedDriver?: User;
@@ -47,9 +48,12 @@ export interface Tariff {
   pricePerKwh: number;
   currency: string;
   validFrom?: string;
-  validTo?: string;
+  validUntil?: string;
+  timeOfDay?: string;
   isActive: boolean;
+  description?: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface ChargeSession {
@@ -153,11 +157,13 @@ export interface CreateStationDto {
 export interface CreateTariffDto {
   name: string;
   provider?: string;
-  pricePerKwh: number;
+  pricePerKwh?: number;
   currency?: string;
   validFrom?: string;
-  validTo?: string;
+  validUntil?: string;
+  timeOfDay?: string;
   isActive?: boolean;
+  description?: string;
 }
 
 export interface CreateUserDto {

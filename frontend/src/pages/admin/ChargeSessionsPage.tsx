@@ -15,8 +15,13 @@ export default function ChargeSessionsPage() {
   const { data: sessions = [], isLoading, error } = useQuery<ChargeSession[]>({
     queryKey: ['charge-sessions'],
     queryFn: async () => {
-      const { data } = await api.get('/charge-sessions');
-      return data;
+      try {
+        const { data } = await api.get('/charge-sessions');
+        return data;
+      } catch (err: any) {
+        console.error('Error fetching charge sessions:', err.response?.data);
+        throw err;
+      }
     },
   });
 
@@ -59,7 +64,9 @@ export default function ChargeSessionsPage() {
       toast.success('Сесията за зареждане е създадена успешно!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Грешка при създаване на сесия');
+      const errorMessage = error.response?.data?.message || error.message || 'Грешка при създаване на сесия';
+      console.error('Charge session creation error:', error.response?.data);
+      toast.error(Array.isArray(errorMessage) ? errorMessage.join(', ') : errorMessage);
     },
   });
 

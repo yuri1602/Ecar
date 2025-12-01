@@ -6,6 +6,7 @@ import AdminLayout from './layouts/AdminLayout';
 import DriverLayout from './layouts/DriverLayout';
 import DashboardPage from './pages/admin/DashboardPage';
 import VehiclesPage from './pages/admin/VehiclesPage';
+import VehicleDetailsPage from './pages/admin/VehicleDetailsPage';
 import ChargeSessionsPage from './pages/admin/ChargeSessionsPage';
 import StationsPage from './pages/admin/StationsPage';
 import TariffsPage from './pages/admin/TariffsPage';
@@ -59,6 +60,7 @@ function App() {
           <Route element={<AdminLayout />}>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/vehicles" element={<VehiclesPage />} />
+            <Route path="/vehicles/:id" element={<VehicleDetailsPage />} />
             <Route path="/charge-sessions" element={<ChargeSessionsPage />} />
             <Route path="/stations" element={<StationsPage />} />
             <Route path="/tariffs" element={<TariffsPage />} />

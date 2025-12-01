@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Vehicle } from './entities/vehicle.entity';
+import { Vehicle, VehicleStatus } from './entities/vehicle.entity';
 import { UserVehicle } from './entities/user-vehicle.entity';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
@@ -90,20 +90,21 @@ export class VehiclesService {
     const vehicle = await this.findOne(id);
 
     // Check if vehicle has any associated charge sessions
-    const hasChargeSessions = await this.vehiclesRepository
-      .createQueryBuilder('vehicle')
-      .leftJoin('vehicle.chargeSessions', 'session')
-      .where('vehicle.id = :id', { id })
-      .andWhere('session.id IS NOT NULL')
-      .getCount();
+    const hasChargeSessions = await this.vehiclesRepository.manager
+      .createQueryBuilder()
+      .select('COUNT(*)', 'count')
+      .from('charge_sessions', 'session')
+      .where('session.vehicle_id = :vehicleId', { vehicleId: id })
+      .getRawOne();
 
-    if (hasChargeSessions > 0) {
-      throw new ConflictException(
-        `Cannot delete vehicle ${vehicle.registrationNo} because it has associated charge sessions. Consider setting status to 'inactive' instead.`,
-      );
+    if (parseInt(hasChargeSessions.count) > 0) {
+      // If has sessions, mark as retired instead of deleting
+      vehicle.status = VehicleStatus.RETIRED;
+      await this.vehiclesRepository.save(vehicle);
+    } else {
+      // If no sessions, can safely delete
+      await this.vehiclesRepository.remove(vehicle);
     }
-
-    await this.vehiclesRepository.remove(vehicle);
   }
 
   async assignUserToVehicle(

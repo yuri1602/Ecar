@@ -18,8 +18,10 @@ export default function TariffFormModal({ tariff, onClose }: TariffFormModalProp
     pricePerKwh: 0,
     currency: 'BGN',
     validFrom: '',
-    validTo: '',
+    validUntil: '',
+    timeOfDay: '',
     isActive: true,
+    description: '',
   });
 
   useEffect(() => {
@@ -30,8 +32,10 @@ export default function TariffFormModal({ tariff, onClose }: TariffFormModalProp
         pricePerKwh: tariff.pricePerKwh,
         currency: tariff.currency || 'BGN',
         validFrom: tariff.validFrom ? tariff.validFrom.split('T')[0] : '',
-        validTo: tariff.validTo ? tariff.validTo.split('T')[0] : '',
+        validUntil: tariff.validUntil ? tariff.validUntil.split('T')[0] : '',
+        timeOfDay: tariff.timeOfDay || '',
         isActive: tariff.isActive,
+        description: tariff.description || '',
       });
     }
   }, [tariff]);
@@ -63,10 +67,22 @@ export default function TariffFormModal({ tariff, onClose }: TariffFormModalProp
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Clean up the data - convert empty strings to undefined, ensure pricePerKwh is a number or undefined
+    const cleanData: CreateTariffDto = {
+      ...formData,
+      pricePerKwh: formData.pricePerKwh || formData.pricePerKwh === 0 ? Number(formData.pricePerKwh) : undefined,
+      validFrom: formData.validFrom || undefined,
+      validUntil: formData.validUntil || undefined,
+      provider: formData.provider || undefined,
+      timeOfDay: formData.timeOfDay || undefined,
+      description: formData.description || undefined,
+    };
+    
     if (tariff) {
-      updateMutation.mutate({ id: tariff.id, payload: formData });
+      updateMutation.mutate({ id: tariff.id, payload: cleanData });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(cleanData);
     }
   };
 
@@ -121,16 +137,16 @@ export default function TariffFormModal({ tariff, onClose }: TariffFormModalProp
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Цена за kWh <span className="text-red-500">*</span>
+                Цена за kWh <span className="text-gray-500 text-xs">(може да е 0 за безплатно зареждане)</span>
               </label>
               <input
                 type="number"
                 name="pricePerKwh"
                 value={formData.pricePerKwh}
                 onChange={handleChange}
-                required
                 min="0"
                 step="0.01"
+                placeholder="0.00"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -155,7 +171,7 @@ export default function TariffFormModal({ tariff, onClose }: TariffFormModalProp
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Валидна от
+                Валидна от <span className="text-gray-500 text-xs">(опционално)</span>
               </label>
               <input
                 type="date"
@@ -168,16 +184,47 @@ export default function TariffFormModal({ tariff, onClose }: TariffFormModalProp
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Валидна до
+                Валидна до <span className="text-gray-500 text-xs">(опционално)</span>
               </label>
               <input
                 type="date"
-                name="validTo"
-                value={formData.validTo}
+                name="validUntil"
+                value={formData.validUntil}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Период на деня <span className="text-gray-500 text-xs">(опционално)</span>
+            </label>
+            <select
+              name="timeOfDay"
+              value={formData.timeOfDay}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Избери...</option>
+              <option value="all-day">Целодневна</option>
+              <option value="peak">Пикови часове</option>
+              <option value="off-peak">Извън пикови часове</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Описание <span className="text-gray-500 text-xs">(опционално)</span>
+            </label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Добавете описание на тарифата..."
+            />
           </div>
 
           <div>
