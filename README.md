@@ -95,6 +95,8 @@ Ecar/
 - [UI/UX](./docs/05_UI_UX_SPECIFICATION.md)
 - [Сигурност](./docs/06_SECURITY_RBAC.md)
 - [План за внедряване](./docs/07_IMPLEMENTATION_PLAN.md)
+- [Production Deployment (Ubuntu)](./docs/08_PRODUCTION_DEPLOYMENT.md)
+- [Миграция на данни](./docs/09_DATA_MIGRATION.md)
 
 ## 🛠️ Development
 
@@ -165,12 +167,21 @@ docker-compose up -d --build
 
 ## 🔧 Environment Variables
 
-Вижте `.env.example` за пълен списък на променливи. Основни:
+Вижте `.env.example` за пълен списък на променливи. 
 
+### SMTP Configuration (SuperHosting)
+За да работят имейлите коректно през SuperHosting:
+- **Host:** `mail.albena.bg`
+- **Port:** `26` (Non-SSL/StartTLS)
+- **Secure:** `false`
+- **User:** `ecar@albena.bg`
+- **Password:** (Use the specific app password)
+- **From:** `ecar@albena.bg`
+
+### Основни променливи:
 - `DATABASE_URL` - PostgreSQL connection string
 - `REDIS_URL` - Redis connection string
 - `JWT_SECRET` - Secret key за JWT tokens
-- `SMTP_*` - Email configuration
 
 ## 📊 Database Management
 

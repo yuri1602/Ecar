@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Battery, Clock, CreditCard } from 'lucide-react';
+import { Plus, Battery, Clock, CreditCard, Edit2, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { api } from '../../lib/api';
 import { ChargeSession, Vehicle, Station, Tariff } from '../../types';
@@ -10,6 +10,7 @@ import ChargeSessionFormModal from '../../components/charge-sessions/ChargeSessi
 export default function ChargeSessionsPage() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingSession, setEditingSession] = useState<ChargeSession | null>(null);
 
   // Fetch charge sessions
   const { data: sessions = [], isLoading, error } = useQuery<ChargeSession[]>({
@@ -70,8 +71,59 @@ export default function ChargeSessionsPage() {
     },
   });
 
+  // Update charge session mutation
+  const updateMutation = useMutation({
+    mutationFn: async (data: { id: string; sessionData: any }) => {
+      const { data: response } = await api.patch(`/charge-sessions/${data.id}`, data.sessionData);
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['charge-sessions'] });
+      setIsModalOpen(false);
+      setEditingSession(null);
+      toast.success('Сесията е обновена успешно!');
+    },
+    onError: (error: any) => {
+      toast.error('Грешка при обновяване на сесията');
+    },
+  });
+
+  // Delete charge session mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/charge-sessions/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['charge-sessions'] });
+      toast.success('Сесията е изтрита успешно!');
+    },
+    onError: (error: any) => {
+      toast.error('Грешка при изтриване на сесията');
+    },
+  });
+
   const handleSubmit = (data: any) => {
-    createMutation.mutate(data);
+    if (editingSession) {
+      updateMutation.mutate({ id: editingSession.id, sessionData: data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  const handleEdit = (session: ChargeSession) => {
+    setEditingSession(session);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    if (window.confirm('Сигурни ли сте, че искате да изтриете този запис?')) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingSession(null);
   };
 
   const getStatusBadge = (status: string) => {
@@ -161,6 +213,9 @@ export default function ChargeSessionsPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Статус
                   </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Действия
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -202,6 +257,24 @@ export default function ChargeSessionsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(session.status)}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => handleEdit(session)}
+                          className="text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded"
+                          title="Редактиране"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(session.id)}
+                          className="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded"
+                          title="Изтриване"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -215,9 +288,10 @@ export default function ChargeSessionsPage() {
           vehicles={vehicles}
           stations={stations}
           tariffs={tariffs}
-          onClose={() => setIsModalOpen(false)}
+          onClose={handleCloseModal}
           onSubmit={handleSubmit}
-          isSubmitting={createMutation.isPending}
+          isSubmitting={createMutation.isPending || updateMutation.isPending}
+          initialData={editingSession}
         />
       )}
     </div>

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ChargeSessionsService } from './charge-sessions.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
@@ -62,5 +62,31 @@ export class ChargeSessionsController {
     @CurrentUser() user: any,
   ) {
     return this.chargeSessionsService.create(createChargeSessionDto, user.id);
+  }
+
+  @Patch(':id')
+  @Roles(UserRole.ADMIN, UserRole.FLEET_MANAGER)
+  @ApiOperation({ summary: 'Update charge session' })
+  @ApiResponse({ status: 200, description: 'Charge session updated successfully' })
+  update(
+    @Param('id') id: string,
+    @Body() updateData: Partial<CreateChargeSessionDto>,
+  ) {
+    const sessionData: any = { ...updateData };
+    if (updateData.startedAt) {
+      sessionData.startedAt = new Date(updateData.startedAt);
+    }
+    if (updateData.endedAt) {
+      sessionData.endedAt = new Date(updateData.endedAt);
+    }
+    return this.chargeSessionsService.update(id, sessionData);
+  }
+
+  @Delete(':id')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Delete charge session' })
+  @ApiResponse({ status: 200, description: 'Charge session deleted successfully' })
+  remove(@Param('id') id: string) {
+    return this.chargeSessionsService.remove(id);
   }
 }

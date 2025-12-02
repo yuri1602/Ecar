@@ -758,13 +758,13 @@ cron.schedule('0 3 * * *', async () => {
 ### Environment Variables
 
 ```bash
-# SMTP Configuration
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
+# SMTP Configuration (SuperHosting Example)
+SMTP_HOST=mail.albena.bg
+SMTP_PORT=26
 SMTP_SECURE=false
-SMTP_USER=your-email@company.com
-SMTP_PASSWORD=your-app-password
-SMTP_FROM=noreply@ecar.company.com
+SMTP_USER=ecar@albena.bg
+SMTP_PASSWORD=your-secure-password
+SMTP_FROM=ecar@albena.bg
 
 # Redis (Job Queue)
 REDIS_HOST=localhost

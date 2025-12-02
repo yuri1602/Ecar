@@ -131,6 +131,7 @@ export interface CreateChargeSessionDto {
   endedAt: string;
   kwhCharged: number;
   priceTotal: number;
+  status?: 'pending_odometer' | 'completed' | 'cancelled';
   notes?: string;
 }
 

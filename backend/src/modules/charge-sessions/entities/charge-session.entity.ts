@@ -52,10 +52,10 @@ export class ChargeSession {
   @JoinColumn({ name: 'tariff_id' })
   tariff: Tariff;
 
-  @Column({ name: 'started_at', type: 'timestamptz' })
+  @Column({ name: 'started_at', type: 'timestamptz', nullable: true })
   startedAt: Date;
 
-  @Column({ name: 'ended_at', type: 'timestamptz' })
+  @Column({ name: 'ended_at', type: 'timestamptz', nullable: true })
   endedAt: Date;
 
   @Column({ name: 'kwh_charged', type: 'decimal', precision: 8, scale: 3 })

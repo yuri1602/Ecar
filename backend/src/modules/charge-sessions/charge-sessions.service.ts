@@ -94,17 +94,22 @@ export class ChargeSessionsService {
     }
 
     // Validate that endedAt is after startedAt
-    const startedAt = new Date(createChargeSessionDto.startedAt);
-    const endedAt = new Date(createChargeSessionDto.endedAt);
-    if (endedAt <= startedAt) {
-      throw new BadRequestException('End time must be after start time');
+    if (createChargeSessionDto.startedAt && createChargeSessionDto.endedAt) {
+      const startedAt = new Date(createChargeSessionDto.startedAt);
+      const endedAt = new Date(createChargeSessionDto.endedAt);
+      // Validation removed as per request
+      /*
+      if (endedAt <= startedAt) {
+        throw new BadRequestException('End time must be after start time');
+      }
+      */
     }
 
     // Create the charge session
     const session = this.chargeSessionsRepository.create({
       ...createChargeSessionDto,
       vehicleId,
-      status: SessionStatus.PENDING_ODOMETER,
+      status: createChargeSessionDto.status || SessionStatus.PENDING_ODOMETER,
       createdBy: createdById,
     });
     const savedSession = await this.chargeSessionsRepository.save(session);
@@ -177,5 +182,12 @@ export class ChargeSessionsService {
     const session = await this.findOne(id);
     Object.assign(session, sessionData);
     return this.chargeSessionsRepository.save(session);
+  }
+
+  async remove(id: string): Promise<void> {
+    const result = await this.chargeSessionsRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Charge session with ID ${id} not found`);
+    }
   }
 }

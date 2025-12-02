@@ -21,6 +21,13 @@ export class NotificationsService {
     });
   }
 
+  async findAll(): Promise<Notification[]> {
+    return this.notificationsRepository.find({
+      relations: ['user'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async create(notificationData: Partial<Notification>): Promise<Notification> {
     const notification = this.notificationsRepository.create(notificationData);
     const saved = await this.notificationsRepository.save(notification);

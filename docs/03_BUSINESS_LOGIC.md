@@ -59,14 +59,15 @@
                                     ▼
                          ┌─────────────────────────┐
                          │ Намира всички активни   │
-                         │ потребители, свързани   │
-                         │ с този автомобил        │
-                         │ (user_vehicles)         │
+                         │ потребители:            │
+                         │ 1. Assigned Driver      │
+                         │ 2. UserVehicles list    │
                          └──────────┬──────────────┘
                                     │
                                     ▼
                          ┌─────────────────────────┐
-                         │ За всеки потребител:    │
+                         │ За всеки уникален       │
+                         │ потребител:             │
                          │ • Създава notification  │
                          │   запис (status=queued) │
                          │ • Добавя job в опашка   │
@@ -139,7 +140,15 @@ async function createChargeSession(adminId: string, data: CreateSessionDTO): Pro
     });
     
     // 6. Намиране на всички активни шофьори за този автомобил
-    const assignedUsers = await trx.userVehicles.findMany({
+    const drivers = [];
+
+    // 6.1. Check for directly assigned driver
+    if (vehicle.assignedDriver && vehicle.assignedDriver.isActive) {
+      drivers.push(vehicle.assignedDriver);
+    }
+
+    // 6.2. Check for drivers in userVehicles
+    const additionalDrivers = await trx.userVehicles.findMany({
       where: {
         vehicleId: vehicle.id,
         OR: [
@@ -149,12 +158,16 @@ async function createChargeSession(adminId: string, data: CreateSessionDTO): Pro
       },
       include: { user: true }
     });
+    drivers.push(...additionalDrivers.map(uv => uv.user));
+
+    // Deduplicate
+    const uniqueDrivers = [...new Set(drivers.map(d => d.id))].map(id => drivers.find(d => d.id === id));
     
     // 7. Създаване на нотификации
-    for (const assignment of assignedUsers) {
+    for (const driver of uniqueDrivers) {
       await trx.notifications.create({
         data: {
-          userId: assignment.userId,
+          userId: driver.id,
           sessionId: newSession.id,
           type: 'odometer_request',
           subject: `Ново зареждане за ${vehicle.registrationNo}`,

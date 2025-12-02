@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { X } from 'lucide-react';
-import { Vehicle, Station, Tariff, CreateChargeSessionDto, ChargeCard } from '../../types';
+import { Vehicle, Station, Tariff, CreateChargeSessionDto, ChargeCard, ChargeSession } from '../../types';
 import { chargeCardsApi } from '../../lib/api';
 
 interface ChargeSessionFormModalProps {
@@ -11,6 +11,7 @@ interface ChargeSessionFormModalProps {
   onClose: () => void;
   onSubmit: (data: CreateChargeSessionDto) => void;
   isSubmitting: boolean;
+  initialData?: ChargeSession | null;
 }
 
 export default function ChargeSessionFormModal({
@@ -20,6 +21,7 @@ export default function ChargeSessionFormModal({
   onClose,
   onSubmit,
   isSubmitting,
+  initialData,
 }: ChargeSessionFormModalProps) {
   const [useCardEntry, setUseCardEntry] = useState(false);
   const [formData, setFormData] = useState<CreateChargeSessionDto>({
@@ -31,8 +33,29 @@ export default function ChargeSessionFormModal({
     endedAt: '',
     kwhCharged: 0,
     priceTotal: 0,
+    status: 'pending_odometer',
     notes: '',
   });
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        vehicleId: initialData.vehicleId,
+        chargeCardId: initialData.chargeCardId || '',
+        stationId: initialData.stationId,
+        tariffId: initialData.tariffId,
+        startedAt: initialData.startedAt.slice(0, 16), // Format for datetime-local
+        endedAt: initialData.endedAt.slice(0, 16),
+        kwhCharged: Number(initialData.kwhCharged),
+        priceTotal: Number(initialData.priceTotal),
+        status: initialData.status,
+        notes: initialData.notes || '',
+      });
+      if (initialData.chargeCardId) {
+        setUseCardEntry(true);
+      }
+    }
+  }, [initialData]);
 
   const { data: chargeCards = [] } = useQuery({
     queryKey: ['charge-cards'],
@@ -59,6 +82,8 @@ export default function ChargeSessionFormModal({
       alert('Моля, изберете тарифа');
       return;
     }
+    // Date validation removed as per request
+    /*
     if (!formData.startedAt) {
       alert('Моля, въведете начало на зареждането');
       return;
@@ -71,6 +96,7 @@ export default function ChargeSessionFormModal({
       alert('Крайната дата трябва да е след началната');
       return;
     }
+    */
     if (formData.kwhCharged <= 0) {
       alert('Моля, въведете заредена енергия');
       return;
@@ -127,7 +153,9 @@ export default function ChargeSessionFormModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-xl font-bold text-gray-900">Ново зареждане</h2>
+          <h2 className="text-xl font-bold text-gray-900">
+            {initialData ? 'Редактиране на зареждане' : 'Ново зареждане'}
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
@@ -252,7 +280,7 @@ export default function ChargeSessionFormModal({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Начало на зареждането *
+                Начало на зареждането
               </label>
               <input
                 type="datetime-local"
@@ -260,14 +288,13 @@ export default function ChargeSessionFormModal({
                 value={formData.startedAt}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
                 disabled={isSubmitting}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Край на зареждането *
+                Край на зареждането
               </label>
               <input
                 type="datetime-local"
@@ -275,7 +302,6 @@ export default function ChargeSessionFormModal({
                 value={formData.endedAt}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
                 disabled={isSubmitting}
               />
             </div>
@@ -313,6 +339,23 @@ export default function ChargeSessionFormModal({
                 disabled={isSubmitting}
               />
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Статус
+              </label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                disabled={isSubmitting}
+              >
+                <option value="pending_odometer">Чака одометър</option>
+                <option value="completed">Завършено</option>
+                <option value="cancelled">Отказано</option>
+              </select>
+            </div>
           </div>
 
           <div>
@@ -344,7 +387,7 @@ export default function ChargeSessionFormModal({
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Създаване...' : 'Създай'}
+              {isSubmitting ? 'Запазване...' : (initialData ? 'Запази промените' : 'Създай')}
             </button>
           </div>
         </form>

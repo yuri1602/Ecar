@@ -1,5 +1,6 @@
-import { IsString, IsNotEmpty, IsNumber, IsOptional, IsDateString, IsUUID, Min, ValidateIf } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional, IsDateString, IsUUID, Min, ValidateIf, IsEnum } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { SessionStatus } from '../entities/charge-session.entity';
 
 export class CreateChargeSessionDto {
   @ApiPropertyOptional({ example: '10000000-0000-0000-0000-000000000001', description: 'Vehicle ID (required if no charge card)' })
@@ -24,13 +25,13 @@ export class CreateChargeSessionDto {
 
   @ApiProperty({ example: '2024-11-29T10:00:00Z', description: 'Charge start time' })
   @IsDateString()
-  @IsNotEmpty()
-  startedAt: string;
+  @IsOptional()
+  startedAt?: string;
 
   @ApiProperty({ example: '2024-11-29T12:30:00Z', description: 'Charge end time' })
   @IsDateString()
-  @IsNotEmpty()
-  endedAt: string;
+  @IsOptional()
+  endedAt?: string;
 
   @ApiProperty({ example: 45.5, description: 'kWh charged' })
   @IsNumber()
@@ -41,6 +42,11 @@ export class CreateChargeSessionDto {
   @IsNumber()
   @Min(0)
   priceTotal: number;
+
+  @ApiPropertyOptional({ enum: SessionStatus, default: SessionStatus.PENDING_ODOMETER, description: 'Session status' })
+  @IsOptional()
+  @IsEnum(SessionStatus)
+  status?: SessionStatus;
 
   @ApiPropertyOptional({ example: 'Fast charge during lunch break', description: 'Optional notes' })
   @IsOptional()
