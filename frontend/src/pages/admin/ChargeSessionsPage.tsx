@@ -13,7 +13,7 @@ export default function ChargeSessionsPage() {
   const [editingSession, setEditingSession] = useState<ChargeSession | null>(null);
 
   // Fetch charge sessions
-  const { data: sessions = [], isLoading, error } = useQuery<ChargeSession[]>({
+  const { data: sessions = [], isLoading } = useQuery<ChargeSession[]>({
     queryKey: ['charge-sessions'],
     queryFn: async () => {
       try {
@@ -25,11 +25,6 @@ export default function ChargeSessionsPage() {
       }
     },
   });
-
-  if (error) {
-    // Log error but don't break UI
-    console.error('Error loading sessions:', error);
-  }
 
   // Fetch vehicles for form
   const { data: vehicles = [] } = useQuery<Vehicle[]>({
@@ -88,7 +83,7 @@ export default function ChargeSessionsPage() {
       setEditingSession(null);
       toast.success('Сесията е обновена успешно!');
     },
-    onError: (error: any) => {
+    onError: () => {
       toast.error('Грешка при обновяване на сесията');
     },
   });
@@ -102,7 +97,7 @@ export default function ChargeSessionsPage() {
       queryClient.invalidateQueries({ queryKey: ['charge-sessions'] });
       toast.success('Сесията е изтрита успешно!');
     },
-    onError: (error: any) => {
+    onError: () => {
       toast.error('Грешка при изтриване на сесията');
     },
   });
@@ -159,16 +154,7 @@ export default function ChargeSessionsPage() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="px-4 py-6 sm:px-0">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <h3 className="text-red-800 font-medium mb-2">Грешка при зареждане</h3>
-          <p className="text-red-600 text-sm">{(error as any)?.response?.data?.message || 'Възникна грешка при зареждане на данните'}</p>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="px-4 py-6 sm:px-0">
