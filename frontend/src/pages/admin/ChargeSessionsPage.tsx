@@ -27,6 +27,7 @@ export default function ChargeSessionsPage() {
   });
 
   if (error) {
+    // Log error but don't break UI
     console.error('Error loading sessions:', error);
   }
 
