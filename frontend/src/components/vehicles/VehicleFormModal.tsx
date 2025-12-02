@@ -6,12 +6,13 @@ import { usersApi } from '../../lib/api';
 
 interface VehicleFormModalProps {
   vehicle?: Vehicle | null;
+  currentOdometer?: number;
   onClose: () => void;
-  onSubmit: (data: CreateVehicleDto, initialOdometer?: number) => void;
+  onSubmit: (data: CreateVehicleDto, odometer?: number) => void;
   isSubmitting: boolean;
 }
 
-export default function VehicleFormModal({ vehicle, onClose, onSubmit, isSubmitting }: VehicleFormModalProps) {
+export default function VehicleFormModal({ vehicle, currentOdometer = 0, onClose, onSubmit, isSubmitting }: VehicleFormModalProps) {
   const { data: users = [] } = useQuery<User[]>({
     queryKey: ['users'],
     queryFn: usersApi.getAll,
@@ -33,7 +34,7 @@ export default function VehicleFormModal({ vehicle, onClose, onSubmit, isSubmitt
     assignedDriverId: '',
   });
 
-  const [initialOdometer, setInitialOdometer] = useState<number>(0);
+  const [odometer, setOdometer] = useState<number>(0);
 
   useEffect(() => {
     if (vehicle) {
@@ -50,8 +51,11 @@ export default function VehicleFormModal({ vehicle, onClose, onSubmit, isSubmitt
         notes: vehicle.notes || '',
         assignedDriverId: vehicle.assignedDriverId || '',
       });
+      setOdometer(currentOdometer);
+    } else {
+      setOdometer(0);
     }
-  }, [vehicle]);
+  }, [vehicle, currentOdometer]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,8 +88,8 @@ export default function VehicleFormModal({ vehicle, onClose, onSubmit, isSubmitt
       assignedDriverId: formData.assignedDriverId,
     };
 
-    // Pass initial odometer only when creating new vehicle
-    onSubmit(cleanedData, !vehicle && initialOdometer > 0 ? initialOdometer : undefined);
+    // Pass odometer only when creating new vehicle or if it changed
+    onSubmit(cleanedData, odometer > 0 ? odometer : undefined);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -278,26 +282,26 @@ export default function VehicleFormModal({ vehicle, onClose, onSubmit, isSubmitt
               />
             </div>
 
-            {!vehicle && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Начални километри <span className="text-gray-500 text-xs">(опционално)</span>
-                </label>
-                <input
-                  type="number"
-                  value={initialOdometer}
-                  onChange={(e) => setInitialOdometer(Number(e.target.value) || 0)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="0"
-                  min="0"
-                  step="1"
-                  disabled={isSubmitting}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Показанието на одометъра в момента на добавяне на автомобила
-                </p>
-              </div>
-            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {vehicle ? 'Текущ километраж' : 'Начални километри'} <span className="text-gray-500 text-xs">(опционално)</span>
+              </label>
+              <input
+                type="number"
+                value={odometer}
+                onChange={(e) => setOdometer(Number(e.target.value) || 0)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="0"
+                min="0"
+                step="1"
+                disabled={isSubmitting}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {vehicle 
+                  ? 'Промяната ще добави нов запис в историята на километража' 
+                  : 'Показанието на одометъра в момента на добавяне на автомобила'}
+              </p>
+            </div>
           </div>
 
           <div>

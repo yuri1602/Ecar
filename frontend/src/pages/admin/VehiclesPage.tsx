@@ -12,6 +12,7 @@ export default function VehiclesPage() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+  const [editingVehicleOdometer, setEditingVehicleOdometer] = useState<number>(0);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -39,7 +40,9 @@ export default function VehiclesPage() {
     const vehicleReadings = odometerReadings
       .filter((reading: any) => reading.vehicleId === vehicleId)
       .sort((a: any, b: any) => new Date(b.readingAt).getTime() - new Date(a.readingAt).getTime());
-    return vehicleReadings[0]?.readingKm || '-';
+    
+    const lastReading = vehicleReadings[0]?.readingKm;
+    return lastReading !== undefined && lastReading !== null ? lastReading : '-';
   };
 
   // Create vehicle mutation
@@ -72,12 +75,31 @@ export default function VehiclesPage() {
 
   // Update vehicle mutation
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<CreateVehicleDto> }) => {
+    mutationFn: async ({ id, data, odometer }: { id: string; data: Partial<CreateVehicleDto>; odometer?: number }) => {
       const response = await api.put(`/vehicles/${id}`, data);
+      
+      // If odometer is provided and different/new, add reading
+      if (odometer !== undefined && odometer > 0) {
+        // We don't check against previous because we want to allow corrections/updates
+        // But maybe we should check if it's different to avoid spamming?
+        // For now, let's just add it if provided.
+        // Actually, let's check if it's different from current to avoid duplicates if user didn't change it
+        const currentOdo = getLastOdometer(id);
+        if (currentOdo !== odometer) {
+             await api.post('/odometer', {
+              vehicleId: id,
+              readingKm: odometer,
+              readingAt: new Date().toISOString(),
+              notes: 'Ръчна корекция/обновяване от администратор',
+            });
+        }
+      }
+
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      queryClient.invalidateQueries({ queryKey: ['odometer'] });
       setIsModalOpen(false);
       setEditingVehicle(null);
       toast.success('Автомобилът е обновен успешно!');
@@ -106,6 +128,8 @@ export default function VehiclesPage() {
 
   const handleEdit = (vehicle: Vehicle) => {
     setEditingVehicle(vehicle);
+    const lastOdometer = getLastOdometer(vehicle.id);
+    setEditingVehicleOdometer(typeof lastOdometer === 'number' ? lastOdometer : 0);
     setIsModalOpen(true);
   };
 
@@ -123,11 +147,11 @@ export default function VehiclesPage() {
     setEditingVehicle(null);
   };
 
-  const handleSubmit = (data: CreateVehicleDto, initialOdometer?: number) => {
+  const handleSubmit = (data: CreateVehicleDto, odometer?: number) => {
     if (editingVehicle) {
-      updateMutation.mutate({ id: editingVehicle.id, data });
+      updateMutation.mutate({ id: editingVehicle.id, data, odometer });
     } else {
-      createMutation.mutate({ vehicleData: data, initialOdometer });
+      createMutation.mutate({ vehicleData: data, initialOdometer: odometer });
     }
   };
 
@@ -351,6 +375,7 @@ export default function VehiclesPage() {
       {isModalOpen && (
         <VehicleFormModal
           vehicle={editingVehicle}
+          currentOdometer={editingVehicleOdometer}
           onClose={handleCloseModal}
           onSubmit={handleSubmit}
           isSubmitting={createMutation.isPending || updateMutation.isPending}

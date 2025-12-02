@@ -15,6 +15,13 @@ import { CreateOdometerDto } from './dto/create-odometer.dto';
 export class OdometerController {
   constructor(private readonly odometerService: OdometerService) {}
 
+  @Get()
+  @ApiOperation({ summary: 'Get all odometer readings' })
+  @ApiResponse({ status: 200, description: 'Returns all odometer readings' })
+  findAll() {
+    return this.odometerService.findAll();
+  }
+
   @Get('vehicle/:vehicleId')
   @ApiOperation({ summary: 'Get odometer readings for vehicle' })
   @ApiResponse({ status: 200, description: 'Returns all odometer readings for vehicle' })

@@ -14,6 +14,13 @@ export class OdometerService {
     private chargeSessionRepository: Repository<ChargeSession>,
   ) {}
 
+  async findAll(): Promise<OdometerReading[]> {
+    return this.odometerRepository.find({
+      order: { readingAt: 'DESC' },
+      relations: ['vehicle', 'session'],
+    });
+  }
+
   async findByVehicleId(vehicleId: string): Promise<OdometerReading[]> {
     return this.odometerRepository.find({
       where: { vehicleId },
@@ -32,31 +39,35 @@ export class OdometerService {
   async create(createOdometerDto: CreateOdometerDto): Promise<OdometerReading> {
     const { vehicleId, sessionId, readingKm, readingAt, enteredBy, notes } = createOdometerDto;
 
-    // Verify charge session exists and is pending
-    const session = await this.chargeSessionRepository.findOne({
-      where: { id: sessionId },
-      relations: ['vehicle'],
-    });
+    // Verify charge session exists and is pending if sessionId is provided
+    if (sessionId) {
+      const session = await this.chargeSessionRepository.findOne({
+        where: { id: sessionId },
+        relations: ['vehicle'],
+      });
 
-    if (!session) {
-      throw new NotFoundException(`Charge session with ID ${sessionId} not found`);
-    }
+      if (!session) {
+        throw new NotFoundException(`Charge session with ID ${sessionId} not found`);
+      }
 
-    if (session.status !== SessionStatus.PENDING_ODOMETER) {
-      throw new BadRequestException(
-        `Charge session ${sessionId} is not pending odometer entry (status: ${session.status})`,
-      );
-    }
+      if (session.status !== SessionStatus.PENDING_ODOMETER) {
+        throw new BadRequestException(
+          `Charge session ${sessionId} is not pending odometer entry (status: ${session.status})`,
+        );
+      }
 
-    if (session.vehicleId !== vehicleId) {
-      throw new BadRequestException('Session vehicle ID does not match provided vehicle ID');
+      if (session.vehicleId !== vehicleId) {
+        throw new BadRequestException('Session vehicle ID does not match provided vehicle ID');
+      }
     }
 
     // Get the latest odometer reading for this vehicle
     const latestReading = await this.findLatestByVehicleId(vehicleId);
 
     // Validate that new reading is greater than previous
-    if (latestReading && readingKm <= latestReading.readingKm) {
+    // Only enforce strict validation for session-based readings (automated/driver flow)
+    // Manual entries (no sessionId) are treated as corrections/admin overrides
+    if (sessionId && latestReading && readingKm <= latestReading.readingKm) {
       throw new BadRequestException(
         `New odometer reading (${readingKm} km) must be greater than previous reading (${latestReading.readingKm} km)`,
       );
@@ -64,7 +75,7 @@ export class OdometerService {
 
     // Validate that distance is reasonable (max 2000km by default)
     const maxDistance = parseInt(process.env.MAX_ODOMETER_DISTANCE_KM || '2000', 10);
-    if (latestReading) {
+    if (sessionId && latestReading) {
       const distance = readingKm - latestReading.readingKm;
       if (distance > maxDistance) {
         throw new BadRequestException(
@@ -86,9 +97,11 @@ export class OdometerService {
 
     // The database trigger will automatically update the session status to 'completed'
     // But we'll do it explicitly here for clarity
-    await this.chargeSessionRepository.update(sessionId, {
-      status: SessionStatus.COMPLETED,
-    });
+    if (sessionId) {
+      await this.chargeSessionRepository.update(sessionId, {
+        status: SessionStatus.COMPLETED,
+      });
+    }
 
     // Return the odometer reading with calculated fields
     const result = await this.odometerRepository.findOne({

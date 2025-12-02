@@ -7,10 +7,10 @@ export class CreateOdometerDto {
   @IsNotEmpty()
   vehicleId: string;
 
-  @ApiProperty({ example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', description: 'Charge session ID' })
+  @ApiPropertyOptional({ example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', description: 'Charge session ID' })
   @IsUUID()
-  @IsNotEmpty()
-  sessionId: string;
+  @IsOptional()
+  sessionId?: string;
 
   @ApiProperty({ example: 45250, description: 'Odometer reading in kilometers' })
   @IsNumber()
