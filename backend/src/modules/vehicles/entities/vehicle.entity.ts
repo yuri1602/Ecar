@@ -60,7 +60,7 @@ export class Vehicle {
   notes: string;
 
   @Column({ name: 'assigned_driver_id', type: 'uuid', nullable: true })
-  assignedDriverId: string;
+  assignedDriverId: string | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;

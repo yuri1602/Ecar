@@ -78,8 +78,14 @@ export default function VehicleFormModal({ vehicle, onClose, onSubmit, isSubmitt
       return;
     }
 
+    // Clean up formData - keep empty string for assignedDriverId to allow unassigning
+    const cleanedData = {
+      ...formData,
+      assignedDriverId: formData.assignedDriverId,
+    };
+
     // Pass initial odometer only when creating new vehicle
-    onSubmit(formData, !vehicle && initialOdometer > 0 ? initialOdometer : undefined);
+    onSubmit(cleanedData, !vehicle && initialOdometer > 0 ? initialOdometer : undefined);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {

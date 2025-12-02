@@ -39,7 +39,7 @@ export const vehiclesApi = {
   getAll: () => api.get('/vehicles').then(res => res.data),
   getOne: (id: string) => api.get(`/vehicles/${id}`).then(res => res.data),
   create: (data: any) => api.post('/vehicles', data).then(res => res.data),
-  update: (id: string, data: any) => api.patch(`/vehicles/${id}`, data).then(res => res.data),
+  update: (id: string, data: any) => api.put(`/vehicles/${id}`, data).then(res => res.data),
   delete: (id: string) => api.delete(`/vehicles/${id}`).then(res => res.data),
 };
 

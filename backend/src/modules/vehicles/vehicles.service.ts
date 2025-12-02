@@ -82,8 +82,19 @@ export class VehiclesService {
       }
     }
 
-    Object.assign(vehicle, updateVehicleDto);
-    return this.vehiclesRepository.save(vehicle);
+    // Create update object
+    const updateData: any = { ...updateVehicleDto };
+
+    // Handle assignedDriverId - convert empty string to null
+    if (updateData.assignedDriverId === '') {
+      updateData.assignedDriverId = null;
+    }
+
+    // Perform update directly on the database to avoid relation issues with save()
+    await this.vehiclesRepository.update(id, updateData);
+    
+    // Reload and return
+    return this.findOne(id);
   }
 
   async remove(id: string): Promise<void> {
