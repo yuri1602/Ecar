@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ChargeSessionsService } from './charge-sessions.service';
+import { VehiclesService } from '../vehicles/vehicles.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -13,7 +14,10 @@ import { CreateChargeSessionDto } from './dto/create-charge-session.dto';
 @Controller('charge-sessions')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ChargeSessionsController {
-  constructor(private readonly chargeSessionsService: ChargeSessionsService) {}
+  constructor(
+    private readonly chargeSessionsService: ChargeSessionsService,
+    private readonly vehiclesService: VehiclesService,
+  ) {}
 
   @Get()
   @Roles(UserRole.ADMIN, UserRole.FLEET_MANAGER)
@@ -21,6 +25,16 @@ export class ChargeSessionsController {
   @ApiResponse({ status: 200, description: 'Returns all charge sessions' })
   findAll() {
     return this.chargeSessionsService.findAll();
+  }
+
+  @Get('my-sessions')
+  @Roles(UserRole.DRIVER)
+  @ApiOperation({ summary: 'Get all charge sessions for current driver' })
+  @ApiResponse({ status: 200, description: 'Returns driver sessions' })
+  async findMySessions(@CurrentUser() user: any) {
+    const vehicles = await this.vehiclesService.findByAssignedDriver(user.id);
+    const vehicleIds = vehicles.map(v => v.id);
+    return this.chargeSessionsService.findByVehicleIds(vehicleIds);
   }
 
   @Get('pending/vehicle/:vehicleId')

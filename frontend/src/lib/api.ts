@@ -61,6 +61,7 @@ export const tariffsApi = {
 
 export const chargeSessionsApi = {
   getAll: () => api.get('/charge-sessions').then(res => res.data),
+  getMySessions: () => api.get('/charge-sessions/my-sessions').then(res => res.data),
   getOne: (id: string) => api.get(`/charge-sessions/${id}`).then(res => res.data),
   create: (data: any) => api.post('/charge-sessions', data).then(res => res.data),
   update: (id: string, data: any) => api.patch(`/charge-sessions/${id}`, data).then(res => res.data),

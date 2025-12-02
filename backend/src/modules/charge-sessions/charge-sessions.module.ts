@@ -5,6 +5,7 @@ import { ChargeSession } from './entities/charge-session.entity';
 import { Notification } from '../notifications/entities/notification.entity';
 import { ChargeSessionsService } from './charge-sessions.service';
 import { ChargeSessionsController } from './charge-sessions.controller';
+import { VehiclesModule } from '../vehicles/vehicles.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { ChargeSessionsController } from './charge-sessions.controller';
     BullModule.registerQueue({
       name: 'notifications',
     }),
+    VehiclesModule,
   ],
   controllers: [ChargeSessionsController],
   providers: [ChargeSessionsService],

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { AlertCircle, Battery, Car, Gauge, Clock } from 'lucide-react';
-import { api } from '../../lib/api';
+import { AlertCircle, Battery, Car, Gauge, Clock, History, MapPin } from 'lucide-react';
+import { api, chargeSessionsApi } from '../../lib/api';
 import { ChargeSession, Vehicle } from '../../types';
 import { formatDateTime, formatNumber } from '../../lib/utils';
 import { useAuthStore } from '../../store/auth';
@@ -36,6 +36,12 @@ export default function DriverDashboardPage() {
     staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
+  });
+
+  // Fetch all sessions history
+  const { data: historySessions = [] } = useQuery<ChargeSession[]>({
+    queryKey: ['my-sessions-history'],
+    queryFn: chargeSessionsApi.getMySessions,
   });
 
   const pendingCount = allPendingSessions.length;
@@ -88,7 +94,7 @@ export default function DriverDashboardPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Pending Sessions */}
         {allPendingSessions.length > 0 && (
           <div className="bg-white shadow rounded-lg overflow-hidden">
@@ -180,6 +186,72 @@ export default function DriverDashboardPage() {
               ))
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Charging History */}
+      <div className="bg-white shadow rounded-lg overflow-hidden">
+        <div className="px-6 py-4 border-b">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <History className="w-5 h-5 text-gray-600" />
+            История на зарежданията
+          </h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Автомобил</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Станция</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Заредено</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Цена</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {historySessions.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                    Няма намерени зареждания
+                  </td>
+                </tr>
+              ) : (
+                historySessions.map((session) => (
+                  <tr key={session.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {formatDateTime(session.startedAt)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {session.vehicle?.registrationNo}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {session.station?.name}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {formatNumber(session.kwhCharged)} kWh
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {session.priceTotal ? `${formatNumber(session.priceTotal)} лв.` : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        session.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        session.status === 'pending_odometer' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {session.status === 'completed' ? 'Завършено' :
+                         session.status === 'pending_odometer' ? 'Чака одометър' : session.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

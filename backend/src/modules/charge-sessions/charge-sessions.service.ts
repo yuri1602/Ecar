@@ -47,6 +47,20 @@ export class ChargeSessionsService {
     });
   }
 
+  async findByVehicleIds(vehicleIds: string[]): Promise<ChargeSession[]> {
+    if (vehicleIds.length === 0) {
+      return [];
+    }
+    return this.chargeSessionsRepository.createQueryBuilder('session')
+      .leftJoinAndSelect('session.vehicle', 'vehicle')
+      .leftJoinAndSelect('session.station', 'station')
+      .leftJoinAndSelect('session.tariff', 'tariff')
+      .leftJoinAndSelect('session.chargeCard', 'chargeCard')
+      .where('session.vehicleId IN (:...vehicleIds)', { vehicleIds })
+      .orderBy('session.startedAt', 'DESC')
+      .getMany();
+  }
+
   async create(createChargeSessionDto: CreateChargeSessionDto, createdById: string): Promise<ChargeSession> {
     // Validate that either vehicleId or chargeCardId is provided
     if (!createChargeSessionDto.vehicleId && !createChargeSessionDto.chargeCardId) {
