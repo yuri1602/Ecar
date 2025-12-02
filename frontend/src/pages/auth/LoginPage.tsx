@@ -76,7 +76,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="admin@ecar.local"
+              placeholder="name@company.com"
               required
             />
           </div>
@@ -116,23 +116,6 @@ export default function LoginPage() {
             ) : 'Вход в системата'}
           </button>
         </form>
-
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <p className="text-xs text-gray-600 text-center mb-3 font-medium">Демо акаунти за тестване:</p>
-          <div className="space-y-2 text-xs">
-            <div className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg">
-              <span className="text-gray-700 font-medium">Администратор:</span>
-              <span className="text-gray-600 font-mono">admin@ecar.local</span>
-            </div>
-            <div className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg">
-              <span className="text-gray-700 font-medium">Шофьор:</span>
-              <span className="text-gray-600 font-mono">driver1@ecar.local</span>
-            </div>
-            <div className="text-center text-gray-500 mt-2">
-              <span className="font-medium">Парола:</span> <span className="font-mono">Password123!</span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
