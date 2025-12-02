@@ -6,6 +6,7 @@ import { Queue } from 'bull';
 import { ChargeSession, SessionStatus } from './entities/charge-session.entity';
 import { CreateChargeSessionDto } from './dto/create-charge-session.dto';
 import { Notification } from '../notifications/entities/notification.entity';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class ChargeSessionsService {
@@ -28,7 +29,15 @@ export class ChargeSessionsService {
   async findOne(id: string): Promise<ChargeSession> {
     const session = await this.chargeSessionsRepository.findOne({
       where: { id },
-      relations: ['vehicle', 'station', 'tariff', 'chargeCard', 'vehicle.userVehicles', 'vehicle.userVehicles.user'],
+      relations: [
+        'vehicle', 
+        'station', 
+        'tariff', 
+        'chargeCard', 
+        'vehicle.userVehicles', 
+        'vehicle.userVehicles.user',
+        'vehicle.assignedDriver'
+      ],
     });
     if (!session) {
       throw new NotFoundException(`Charge session with ID ${id} not found`);
@@ -110,15 +119,40 @@ export class ChargeSessionsService {
   }
 
   private async createOdometerNotifications(session: ChargeSession): Promise<void> {
-    const drivers = session.vehicle.userVehicles
-      ?.filter((uv) => uv.user.role === 'driver')
-      .map((uv) => uv.user);
-
-    if (!drivers || drivers.length === 0) {
+    console.log(`[ChargeSessionsService] Checking for drivers to notify for session ${session.id}`);
+    
+    if (!session.vehicle) {
+      console.log('[ChargeSessionsService] No vehicle found');
       return;
     }
 
-    for (const driver of drivers) {
+    const drivers: User[] = [];
+
+    // 1. Check for directly assigned driver
+    if (session.vehicle.assignedDriver && session.vehicle.assignedDriver.isActive) {
+      drivers.push(session.vehicle.assignedDriver);
+    }
+
+    // 2. Check for drivers in userVehicles
+    if (session.vehicle.userVehicles) {
+      const additionalDrivers = session.vehicle.userVehicles
+        .map((uv) => uv.user)
+        .filter(user => user && user.isActive);
+      drivers.push(...additionalDrivers);
+    }
+
+    // Deduplicate drivers by ID
+    const uniqueDrivers = Array.from(new Map(drivers.map(d => [d.id, d])).values());
+
+    console.log(`[ChargeSessionsService] Found ${uniqueDrivers.length} active users assigned to vehicle ${session.vehicle.registrationNo}`);
+
+    if (uniqueDrivers.length === 0) {
+      console.log('[ChargeSessionsService] No active drivers found to notify');
+      return;
+    }
+
+    for (const driver of uniqueDrivers) {
+      console.log(`[ChargeSessionsService] Queuing notification for ${driver.email}`);
       const notification = new Notification();
       notification.userId = driver.id;
       notification.sessionId = session.id;
