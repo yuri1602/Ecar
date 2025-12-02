@@ -112,10 +112,9 @@ export default function TariffsPage() {
                   {formatNumber(tariff.pricePerKwh)} {tariff.currency}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {tariff.validFrom && tariff.validTo ? (
+                  {tariff.validFrom ? (
                     <div>
                       <div>{new Date(tariff.validFrom).toLocaleDateString('bg-BG')}</div>
-                      <div>до {new Date(tariff.validTo).toLocaleDateString('bg-BG')}</div>
                     </div>
                   ) : (
                     '-'

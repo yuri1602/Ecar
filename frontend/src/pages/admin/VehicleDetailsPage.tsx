@@ -11,7 +11,6 @@ import {
   TrendingUp,
   DollarSign,
   User,
-  MapPin,
   Activity,
   FileText,
 } from 'lucide-react';
@@ -21,7 +20,6 @@ import { Vehicle, ChargeSession, OdometerReading } from '../../types';
 export default function VehicleDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [timeRange, setTimeRange] = useState('30'); // days
 
   // Fetch vehicle details
   const { data: vehicle, isLoading: vehicleLoading } = useQuery<Vehicle>({

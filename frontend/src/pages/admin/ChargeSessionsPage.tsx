@@ -26,6 +26,10 @@ export default function ChargeSessionsPage() {
     },
   });
 
+  if (error) {
+    console.error('Error loading sessions:', error);
+  }
+
   // Fetch vehicles for form
   const { data: vehicles = [] } = useQuery<Vehicle[]>({
     queryKey: ['vehicles'],
