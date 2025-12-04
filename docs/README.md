@@ -6,6 +6,8 @@
 
 ### Документи
 
+#### Архитектурни и дизайн документи
+
 1. **[Архитектура](./01_ARCHITECTURE.md)**
    - Системна архитектура и компоненти
    - Технологичен стек (Node.js/NestJS, React, PostgreSQL)
@@ -48,13 +50,38 @@
    - GDPR compliance
    - Security best practices
 
+#### Implementation и Deployment документи
+
 7. **[План за внедряване](./07_IMPLEMENTATION_PLAN.md)**
    - MVP roadmap (6 седмици)
    - v1.0 features (3 седмици)
    - v2.0 vision (6 седмици)
    - Agile процес
    - Testing strategy
-   - Deployment checklist
+   - **Актуализиран Deployment checklist с текущ статус**
+
+8. **[Production Deployment](./08_PRODUCTION_DEPLOYMENT.md)** 🆕
+   - Ръчно внедряване стъпка по стъпка
+   - Docker и Docker Compose setup
+   - Nginx reverse proxy конфигурация
+   - SSL сертификат с Let's Encrypt
+   - Troubleshooting на често срещани проблеми
+   - Maintenance и update процедури
+
+9. **[Data Migration](./09_DATA_MIGRATION.md)** 🆕
+   - Експорт на локална база данни
+   - Трансфер на данни към production
+   - Импорт и верификация
+   - Backup и restore процедури
+
+10. **[Test Environment Setup](./09_TEST_ENVIRONMENT_SETUP.md)** 🆕
+    - Пълно ръководство за production environment
+    - Ubuntu 24.04 LTS server setup
+    - Детайлна Docker конфигурация
+    - Стъпка по стъпка deployment процес (21 стъпки)
+    - Конфигурация на Nginx и SSL
+    - Troubleshooting секция
+    - Maintenance и monitoring команди
 
 ## 🎯 Цел на системата
 
@@ -102,7 +129,7 @@ cp .env.example .env
 npm run dev
 ```
 
-### Docker Compose
+### Docker Compose (Development)
 
 ```bash
 # Start all services
@@ -114,6 +141,27 @@ docker-compose up -d
 # - PostgreSQL: localhost:5432
 # - Redis: localhost:6379
 ```
+
+### Production Deployment
+
+За production deployment използвайте:
+
+```bash
+# Build и start на всички services
+docker compose -f docker-compose.prod.yml up -d --build
+
+# Проверка на статуса
+docker compose -f docker-compose.prod.yml ps
+
+# Логове
+docker compose -f docker-compose.prod.yml logs -f
+
+# Access (след Nginx reverse proxy setup):
+# - Frontend: https://ecar.albena.bg
+# - Backend API: https://ecar.albena.bg/api
+```
+
+**Вижте [Production Deployment Guide](./08_PRODUCTION_DEPLOYMENT.md) за пълни инструкции.**
 
 ## 👥 Роли и права
 
@@ -244,17 +292,50 @@ Admin → Нова сесия → Избор автомобил → Въвежд
 
 Proprietary - Internal use only
 
+## 🐳 Docker Configuration
+
+Проектът включва следните Dockerfiles:
+
+### Backend Dockerfile
+- **Location:** `backend/Dockerfile`
+- **Base image:** node:20-alpine
+- **Build type:** Multi-stage build
+- **CMD:** `npm run start:prod`
+- **Ports:** 3000
+
+### Frontend Dockerfile
+- **Location:** `frontend/Dockerfile`
+- **Base image:** node:20-alpine (builder), nginx:alpine (runtime)
+- **Build type:** Multi-stage build
+- **Static files:** Served by Nginx
+- **Ports:** 80
+
+### Production Configuration
+- **File:** `docker-compose.prod.yml`
+- **Services:** postgres, redis, backend, frontend
+- **Networking:** Docker internal network
+- **Volumes:** Persistent data за PostgreSQL и Redis
+- **Health checks:** Enabled за всички services
+
+**Важни бележки:**
+- NestJS build създава `dist/src/main.js` (не `dist/main.js`)
+- Frontend build script може да бъде `vite build` или `tsc && vite build`
+- Nginx конфигурация за frontend е в `frontend/nginx.conf`
+- Всички environment variables се задават в `.env` файл
+
 ## 📧 Контакти
 
-- **Email:** support@ecar.company.local
-- **Documentation:** https://docs.ecar.company.local
-- **Issue Tracker:** https://jira.company.local/projects/ECAR
+- **Production:** ecar.albena.bg (10.10.11.35)
+- **SMTP:** mail.albena.bg:26
+- **Server User:** albena
+- **Database:** PostgreSQL 14
 
 ---
 
-**Изготвено:** Ноември 2025  
-**Версия:** 1.0  
-**Автори:** ECar Development Team
+**Изготвено:** Ноември 2025 - Декември 2025  
+**Версия:** 1.0 (MVP в процес на deployment)  
+**Автори:** ECar Development Team  
+**Last Updated:** Декември 4, 2025
 
 
 

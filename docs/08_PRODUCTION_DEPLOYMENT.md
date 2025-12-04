@@ -135,8 +135,11 @@ COPY --from=builder /app/package*.json ./
 
 EXPOSE 3000
 
+# Важно: NestJS build-ва в dist/src/main.js, не dist/main.js
 CMD ["npm", "run", "start:prod"]
 ```
+
+**Забележка:** NestJS build процесът създава `dist/src/main.js`, затова използваме `npm run start:prod` скрипта, който автоматично търси правилния път.
 
 **Frontend Dockerfile (`frontend/Dockerfile`):**
 ```dockerfile
@@ -159,6 +162,11 @@ EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
 ```
+
+**Важни бележки за frontend build:**
+- В `package.json` build скриптът е `"build": "tsc && vite build"`
+- Ако възникнат проблеми с TypeScript компилацията, може да се премахне `tsc &&` и да се остави само `"build": "vite build"`, тъй като Vite вътрешно проверява TypeScript
+- Multi-stage build минимизира финалния image размер
 
 **Frontend Nginx Config (`frontend/nginx.conf`):**
 ```nginx
@@ -253,6 +261,10 @@ REDIS_PASSWORD=STRONG_REDIS_PASSWORD
 
 # Security
 JWT_SECRET=VERY_LONG_RANDOM_STRING_HERE
+JWT_EXPIRATION=15m
+JWT_REFRESH_EXPIRATION=7d
+
+# Domain
 DOMAIN_NAME=ecar.albena.bg
 
 # Email (SuperHosting)
@@ -262,7 +274,20 @@ SMTP_SECURE=false
 SMTP_USER=ecar@albena.bg
 SMTP_PASSWORD=YOUR_EMAIL_PASSWORD
 SMTP_FROM=ecar@albena.bg
+
+# Application
+NODE_ENV=production
+PORT=3000
+
+# Optional: For production monitoring
+LOG_LEVEL=info
 ```
+
+**Важни бележки:**
+- Променете всички пароли с силни случайни стрингове
+- За JWT_SECRET използвайте минимум 64 символа: `openssl rand -base64 64`
+- SMTP_PORT=26 е специфичен за SuperHosting (стандартно е 587 или 465)
+- Уверете се, че SMTP_SECURE=false за port 26
 
 ---
 
@@ -366,13 +391,44 @@ crontab -e
 
 ## 🛠️ Troubleshooting
 
+### Често срещани проблеми при build:
+
+**1. Backend: "Cannot find module '/app/dist/main'"**
+- Проблем: NestJS build-ва в `dist/src/main.js`, не в `dist/main.js`
+- Решение: Използвайте `npm run start:prod` вместо директно `node dist/main.js`
+
+**2. Frontend: "Permission denied" при tsc или vite**
+- Проблем: В Alpine Linux node_modules/.bin файловете нямат execute права
+- Решение: Добавете `RUN chmod -R 755 node_modules/.bin` след `npm ci`
+- Алтернатива: Променете build script на `"build": "vite build"` без `tsc &&`
+
+**3. "EACCES: permission denied" при npm install в Docker**
+- Проблем: Права върху files в build context
+- Решение: Уверете се, че всички файлове са readable за Docker daemon
+
 **Проверка на логове:**
 ```bash
 docker compose -f docker-compose.prod.yml logs -f backend
 docker compose -f docker-compose.prod.yml logs -f frontend
 ```
 
+**Проверка на health status:**
+```bash
+docker compose -f docker-compose.prod.yml ps
+```
+
+**Rebuild на определен service:**
+```bash
+docker compose -f docker-compose.prod.yml up -d --build backend
+```
+
 **Рестартиране на всичко:**
 ```bash
 docker compose -f docker-compose.prod.yml restart
+```
+
+**Изтриване на всичко и пълен rebuild:**
+```bash
+docker compose -f docker-compose.prod.yml down -v
+docker compose -f docker-compose.prod.yml up -d --build
 ```
